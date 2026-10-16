@@ -1,0 +1,29 @@
+name: Point Pedro Web Push
+on:
+  repository_dispatch:
+    types: [ppd_webpush]
+permissions:
+  contents: read
+concurrency:
+  group: ppd-push-${{ github.event.client_payload.jobId }}
+  cancel-in-progress: false
+jobs:
+  deliver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install standard Web Push sender
+        run: npm install --no-save --no-audit --no-fund web-push@3.6.7
+      - name: Send authenticated Web Push job
+        env:
+          GAS_WEBAPP_URL: ${{ secrets.GAS_WEBAPP_URL }}
+          GAS_WORKER_SECRET: ${{ secrets.GAS_WORKER_SECRET }}
+          VAPID_PUBLIC_KEY: ${{ secrets.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          VAPID_SUBJECT: ${{ secrets.VAPID_SUBJECT }}
+          PUSH_JOB_ID: ${{ github.event.client_payload.jobId }}
+        run: node .github/scripts/send-web-push.cjs
