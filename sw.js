@@ -1,6 +1,6 @@
-/* Version: 1.0.0.1 – GitHub Pages shell ONLY, not the GAS iframe. */
+/* Version: 1.0.0.4 – GitHub Pages shell ONLY, not the GAS iframe. */
 'use strict';
-const CACHE_NAME = 'ppd-wrapper-shell-v1.0.0.2';
+const CACHE_NAME = 'ppd-wrapper-shell-v1.0.0.4';
 const SHELL_FILES = ['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./push-config.json','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
 const SCOPE_URL = new URL('./',self.registration.scope);
 const isSameScopeURL = url => url.origin===SCOPE_URL.origin && url.pathname.startsWith(SCOPE_URL.pathname);

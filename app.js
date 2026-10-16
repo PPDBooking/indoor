@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.3: authenticated GAS iframe + PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.4: authenticated GAS iframe + PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -16,9 +16,184 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   const hasApis = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window) && window.isSecureContext;
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
-  let gasWindow = null, gasOrigin = '';
+  let gasWindow = null, gasOrigin = '', currentUserId = ''; 
   let bridgeProbeCount = 0;
   const state = {lastError:''};
+
+  /* Optional per-device WebAuthn privacy lock. This masks the entire PWA shell.
+     Server-side session verification and role permissions always remain in GAS.
+     No password, GAS token, private signing key or biometric template is stored here. */
+  const BIO_STORAGE = 'ppd_bio_local_v1';
+  const bioAvailable = () => !!(window.PublicKeyCredential && navigator.credentials && window.crypto?.subtle && window.isSecureContext);
+  const bioLoad = () => {try {const x=JSON.parse(localStorage.getItem(BIO_STORAGE)||'null');
+    return x&&x.enabled&&x.credentialId&&x.userId&&x.publicJwk?x:null;}catch(_){return null;}};
+  const bioSave = value => localStorage.setItem(BIO_STORAGE, JSON.stringify(value));
+  const b64 = bytes => btoa(String.fromCharCode(...bytes)).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  const unb64 = value => Uint8Array.from(atob(String(value).replace(/-/g,'+').replace(/_/g,'/')+'='.repeat((4-String(value).length%4)%4)),c=>c.charCodeAt(0));
+  const rand = () => crypto.getRandomValues(new Uint8Array(32));
+  const bytesEqual = (a,b) => a.length===b.length && a.every((x,i)=>x===b[i]);
+  const textBytes = s => new TextEncoder().encode(s);
+  function cborValue(bytes, start=0) {
+    let at=start;
+    const read=() => {
+      if(at>=bytes.length)throw new Error('Invalid authenticator key.');
+      const h=bytes[at++],major=h>>5,extra=h&31;
+      let n;
+      if(extra<24)n=extra;
+      else if(extra===24)n=bytes[at++];
+      else if(extra===25)n=(bytes[at++]<<8)|bytes[at++];
+      else if(extra===26)n=(bytes[at++]*0x1000000+bytes[at++]*65536+bytes[at++]*256+bytes[at++]);
+      else throw new Error('Unsupported authenticator key encoding.');
+      if(major===0)return n;
+      if(major===1)return -1-n;
+      if(major===2||major===3){const v=bytes.slice(at,at+n);at+=n;return major===2?v:new TextDecoder().decode(v);}
+      if(major===4)return Array.from({length:n},()=>read());
+      if(major===5){const m=new Map();for(let i=0;i<n;i++){const k=read();m.set(k,read());}return m;}
+      if(major===7){if(n===20)return false;if(n===21)return true;if(n===22)return null;}
+      throw new Error('Unsupported authenticator format.');
+    };
+    return [read(),at];
+  }
+  async function checkClientData(buffer,expected,type){
+    const client=JSON.parse(new TextDecoder().decode(buffer));
+    if(client.type!==type || client.origin!==location.origin || !bytesEqual(unb64(client.challenge),expected))
+      throw new Error('Biometric challenge verification failed.');
+  }
+  async function checkAuthenticatorData(bytes,attested){
+    if(bytes.length<37)throw new Error('Invalid device authenticator data.');
+    const rpHash=new Uint8Array(await crypto.subtle.digest('SHA-256',textBytes(location.hostname)));
+    if(!bytesEqual(bytes.slice(0,32),rpHash) || (bytes[32]&0x05)!==0x05 || (attested && !(bytes[32]&0x40)))
+      throw new Error('Device verification was not completed.');
+  }
+  function derSignatureToRaw(der){
+    let p=0;
+    const byte=()=>der[p++];
+    if(byte()!==0x30)throw new Error('Invalid signature.');
+    let total=byte();if(total===0x81)total=byte();
+    if(p+total!==der.length)throw new Error('Invalid signature length.');
+    function part(){if(byte()!==2)throw new Error('Invalid signature integer.');const n=byte();const raw=der.slice(p,p+n);p+=n;
+      if(raw.length>33 || (raw.length===33&&raw[0]!==0))throw new Error('Invalid signature size.');
+      const x=raw.slice(raw.length===33?1:0);if(x.length>32)throw new Error('Invalid signature width.');
+      const out=new Uint8Array(32);out.set(x,32-x.length);return out;
+    }
+    const r=part(),s=part();if(p!==der.length)throw new Error('Invalid signature data.');
+    const v=new Uint8Array(64);v.set(r);v.set(s,32);return v;
+  }
+  async function bioCreateForUser(userId){
+    if(!bioAvailable())throw new Error('Platform biometrics are unsupported on this browser.');
+    const challenge=rand(),handle=rand(); // random WebAuthn user handle; userId stays in this device's lock preference.
+    const c=await navigator.credentials.create({publicKey:{challenge, rp:{name:'Point Pedro Indoor Court'},
+      user:{id:handle,name:'PPD device user',displayName:'Point Pedro member'},
+      pubKeyCredParams:[{type:'public-key',alg:-7}],
+      authenticatorSelection:{authenticatorAttachment:'platform',residentKey:'discouraged',userVerification:'required'},
+      timeout:60000,attestation:'none'}});
+    if(!c || c.type!=='public-key')throw new Error('Biometric enrollment cancelled.');
+    await checkClientData(c.response.clientDataJSON,challenge,'webauthn.create');
+    const att=cborValue(new Uint8Array(c.response.attestationObject))[0];
+    if(!(att instanceof Map))throw new Error('Authenticator registration invalid.');
+    const ad=att.get('authData');await checkAuthenticatorData(ad,true);
+    const idLen=(ad[53]<<8)|ad[54], offset=55+idLen;
+    if(idLen<1 || offset>=ad.length)throw new Error('Authenticator credential missing.');
+    const signedId=ad.slice(55,offset);
+    if(!bytesEqual(signedId,new Uint8Array(c.rawId)))throw new Error('Authenticator identity mismatch.');
+    const cose=cborValue(ad,offset)[0];
+    if(!(cose instanceof Map)||cose.get(3)!==-7||cose.get(1)!==2||cose.get(-1)!==1)
+      throw new Error('This device does not support the required ES256 credential.');
+    const x=cose.get(-2),y=cose.get(-3);
+    if(!(x instanceof Uint8Array)||!(y instanceof Uint8Array)||x.length!==32||y.length!==32)
+      throw new Error('Authenticator public key invalid.');
+    return {enabled:true,userId,credentialId:b64(signedId),publicJwk:{kty:'EC',crv:'P-256',x:b64(x),y:b64(y),ext:true},createdAt:new Date().toISOString()};
+  }
+  async function bioVerify(saved){
+    if(!bioAvailable())throw new Error('Biometric unlock is unavailable on this device.');
+    const challenge=rand(),request={challenge,timeout:60000,userVerification:'required',rpId:location.hostname,
+      allowCredentials:[{type:'public-key',id:unb64(saved.credentialId)}]};
+    const assertion=await navigator.credentials.get({publicKey:request});
+    if(!assertion||assertion.type!=='public-key'||!bytesEqual(new Uint8Array(assertion.rawId),unb64(saved.credentialId)))
+      throw new Error('This device credential did not match.');
+    await checkClientData(assertion.response.clientDataJSON,challenge,'webauthn.get');
+    const ad=new Uint8Array(assertion.response.authenticatorData);
+    await checkAuthenticatorData(ad,false);
+    const hash=new Uint8Array(await crypto.subtle.digest('SHA-256',assertion.response.clientDataJSON));
+    const signed=new Uint8Array(ad.length+hash.length);signed.set(ad);signed.set(hash,ad.length);
+    const key=await crypto.subtle.importKey('jwk',saved.publicJwk,{name:'ECDSA',namedCurve:'P-256'},false,['verify']);
+    const valid=await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'},key,
+      derSignatureToRaw(new Uint8Array(assertion.response.signature)),signed);
+    if(!valid)throw new Error('Biometric signature was not verified.');
+    return true;
+  }
+  const bioGate=document.createElement('section');
+  bioGate.className='ppd-biometric-gate';bioGate.setAttribute('role','dialog');
+  bioGate.setAttribute('aria-modal','true');bioGate.setAttribute('aria-label','Unlock court app');
+  bioGate.innerHTML='<div class="ppd-biometric-card"><div class="ppd-biometric-symbol" aria-hidden="true">🔐</div><h2>Unlock Point Pedro Court</h2><p>Use your device fingerprint, face or screen lock to continue.</p><button type="button" class="ppd-biometric-unlock">Unlock App</button><button type="button" class="ppd-biometric-signout">Sign out & use password</button><small class="ppd-biometric-message" role="status"></small></div>';
+  document.body.appendChild(bioGate);
+  const bioMsg=bioGate.querySelector('.ppd-biometric-message');
+  const bioStatus=msg=>{bioMsg.textContent=msg;};
+  let bioBusy=false, bioUnlockGranted=false, bioForgetRequested=false;
+  function bioPresent(){const locked=!!bioLoad()&&!bioUnlockGranted;
+    document.body.classList.toggle('ppd-biometric-locked',locked);
+    bioGate.hidden=!locked;
+    if(locked)bioGate.querySelector('.ppd-biometric-unlock').focus({preventScroll:true});
+  }
+  function bioReply(msg){postToGAS('PPD_BIO_STATUS',{supported:bioAvailable(),enabled:!!(bioLoad()&&bioLoad().userId===currentUserId),message:msg||
+    (bioAvailable()?'This device biometric app lock is '+(bioLoad()?.userId===currentUserId?'enabled.':'disabled.'):
+     'Biometric lock requires a compatible secure PWA with device screen lock.')});}
+  bioGate.querySelector('.ppd-biometric-unlock').addEventListener('click',async()=>{
+    if(bioBusy)return;const saved=bioLoad();if(!saved){bioUnlockGranted=true;bioPresent();return;}
+    bioBusy=true;bioStatus('Waiting for device verification...');
+    try{await bioVerify(saved);bioUnlockGranted=true;bioPresent();bioReply('Device unlocked.');}
+    catch(e){bioStatus(String(e.message||e));}
+    finally{bioBusy=false;}
+  });
+  bioGate.querySelector('.ppd-biometric-signout').addEventListener('click',()=>{
+    if(!authReady){bioStatus('Waiting for server session. If stuck, clear PWA site data and sign in again.');return;}
+    if(!confirm('Sign out on this device and remove the biometric privacy lock?'))return;
+    bioForgetRequested=true;bioStatus('Signing out securely...');postToGAS('PPD_BIO_FORGET');
+  });
+  async function bioToggle(){
+    if(!authReady||!currentUserId){bioReply('Login is required before changing biometric preferences.');return;}
+    if(bioBusy)return;bioBusy=true;
+    try{
+      const saved=bioLoad();
+      if(saved && saved.userId!==currentUserId)throw new Error('Another user configured this device lock. Please sign out first.');
+      if(saved){await bioVerify(saved);localStorage.removeItem(BIO_STORAGE);bioUnlockGranted=true;
+        bioReply('Biometric app lock disabled on this device.');bioPresent();}
+      else {const created=await bioCreateForUser(currentUserId);bioSave(created);bioUnlockGranted=true;
+        bioReply('Biometric app lock enabled. It will be requested on the next app launch.');}
+    }catch(e){bioReply('No changes saved: '+String(e.message||e).slice(0,160));}
+    finally{bioBusy=false;}
+  }
+  // A direct PWA-origin button gesture is needed on some phones to open WebAuthn.
+  const bioChangeDialog=document.createElement('dialog');
+  bioChangeDialog.className='ppd-bio-confirm';
+  bioChangeDialog.innerHTML='<div class="ppd-bio-confirm-content"><h2>Biometric App Lock</h2><p>Use this device fingerprint, face or screen lock. This is a local privacy lock; server login remains required.</p><button type="button" class="ppd-bio-confirm-go">Continue with device verification</button><button type="button" class="ppd-bio-confirm-cancel">Cancel</button></div>';
+  document.body.appendChild(bioChangeDialog);
+  bioChangeDialog.querySelector('.ppd-bio-confirm-go').addEventListener('click',()=>{
+    bioChangeDialog.close();bioToggle();
+  });
+  bioChangeDialog.querySelector('.ppd-bio-confirm-cancel').addEventListener('click',()=>{
+    bioChangeDialog.close();bioReply('No changes made.');
+  });
+  function promptBioChange(){
+    if(!bioAvailable()){bioReply('WebAuthn is not supported on this PWA device.');return;}
+    if(!authReady||!currentUserId){bioReply('Login is required to change device lock.');return;}
+    bioChangeDialog.showModal();
+  }
+  bioPresent();
+  // A long background absence re-locks only devices whose users opted in.
+  let bioHiddenAt=0;
+  document.addEventListener('visibilitychange',()=>{
+    if(document.hidden){bioHiddenAt=Date.now();return;}
+    if(bioHiddenAt&&Date.now()-bioHiddenAt>5*60*1000&&bioLoad()){
+      bioUnlockGranted=false;bioPresent();
+    }
+    bioHiddenAt=0;
+  });
+  window.addEventListener('pagehide',()=>{bioHiddenAt=Date.now();});
+  window.addEventListener('pageshow',e=>{if(e.persisted&&bioLoad()){
+    bioUnlockGranted=false;bioPresent();
+  }});
+
   const scriptOrigins = ['https://script.google.com','https://script.googleusercontent.com'];
   const setDetails = msg => {details.textContent=msg;};
   function isGASOrigin(origin) {
@@ -104,8 +279,23 @@
     if(d.type==='PPD_AUTH_READY'){
       postToGAS('PPD_AUTH_ACK');
       authReady=!!d.authenticated;
+      currentUserId=authReady?String(d.userId||''):'';
+      if(authReady&&bioLoad()&&bioLoad().userId!==currentUserId){
+        bioUnlockGranted=false;bioPresent();
+      }
       if(!authReady){deviceRegistered=false;pushReady=false;}
       else if(Notification.permission==='granted')await registerDevice(true);
+    }else if(d.type==='PPD_BIO_QUERY'){
+      if(authReady && currentUserId && String(d.userId||'')===currentUserId)bioReply();
+    }else if(d.type==='PPD_BIO_SET'){
+      if(authReady && currentUserId && String(d.userId||'')===currentUserId)promptBioChange();
+    }else if(d.type==='PPD_BIO_SESSION_GONE'){
+      // GAS just confirmed the old server login expired. No authenticated data remains.
+      localStorage.removeItem(BIO_STORAGE);bioUnlockGranted=true;bioPresent();
+    }else if(d.type==='PPD_BIO_FORGOTTEN'){
+      if(bioForgetRequested && d.ok){localStorage.removeItem(BIO_STORAGE);bioUnlockGranted=true;
+        bioPresent();bioForgetRequested=false;location.reload();}
+      else{bioForgetRequested=false;bioStatus('Unable to sign out. Try again after reconnecting.');}
     }else if(d.type==='PPD_REGISTER_RESULT'){
       deviceRegistered=!!d.ok;pushReady=!!d.ready;
       if(!d.ok)setDetails('Device registration error: '+String(d.error||'Please sign in again.'));

@@ -23,3 +23,18 @@ dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 38px);overfl
 .primary-button,.secondary-button{border-radius:10px;min-height:43px;font-weight:700}.primary-button{background:#12513f;color:#fff;border:1px solid #12513f}.secondary-button{background:#fff;color:#12513f;border:1px solid #b4cfc1}.fine-print{font-size:11px;line-height:1.55;color:#6a7672;margin:0}.ios-install-tip{background:#f6f8fc;border:1px solid #dae3f6;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}
 @media(max-width:420px){.brand-copy strong{font-size:11px;max-width:39vw}.brand-copy small{font-size:9px}.utility-bar{gap:4px}.bar-actions{gap:4px}.action-button,.external-button{min-height:32px}.notification-action{padding:0 7px}}
 @media (display-mode:standalone){.app-shell{box-shadow:none}}
+
+/* Biometric privacy gate: isolated PWA root component, no booking UI overrides. */
+.ppd-biometric-gate{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:20px;background:#eaf4ed;color:#164330}
+.ppd-biometric-card{width:min(100%,370px);padding:24px 20px;border-radius:18px;background:#fff;box-shadow:0 8px 45px #0002;display:grid;gap:14px;text-align:center}
+.ppd-biometric-symbol{font-size:38px}.ppd-biometric-card h2{margin:0;font-size:20px}.ppd-biometric-card p{font-size:14px;margin:0;color:#4c6156;line-height:1.4}
+.ppd-biometric-card button{min-height:44px;border-radius:9px;padding:10px;font-weight:700;border:1px solid #c0d8c9;background:white;color:#12513f}
+.ppd-biometric-card .ppd-biometric-unlock{background:#12513f;color:#fff;border-color:#12513f}
+.ppd-biometric-message{min-height:1em;color:#9d572d;line-height:1.4}
+.ppd-biometric-locked #booking-frame{visibility:hidden;pointer-events:none}
+
+.ppd-bio-confirm{width:min(420px,calc(100vw - 24px));border-radius:14px;border:1px solid #bdd8c7;box-shadow:0 15px 48px #0004}
+.ppd-bio-confirm-content{padding:16px;display:grid;gap:14px}
+.ppd-bio-confirm-content h2{font-size:19px;margin:0}.ppd-bio-confirm-content p{font-size:13px;line-height:1.5;color:#41584c;margin:0}
+.ppd-bio-confirm-content button{min-height:44px;border:1px solid #b5cfbe;border-radius:9px;background:#fff;color:#18513c;font-weight:650}
+.ppd-bio-confirm-content .ppd-bio-confirm-go{background:#12513f;color:white}
