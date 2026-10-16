@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.2: authenticated GAS iframe + PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.3: authenticated GAS iframe + PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -17,6 +17,7 @@
   const hasApis = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window) && window.isSecureContext;
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
   let gasWindow = null, gasOrigin = '';
+  let bridgeProbeCount = 0;
   const state = {lastError:''};
   const scriptOrigins = ['https://script.google.com','https://script.googleusercontent.com'];
   const setDetails = msg => {details.textContent=msg;};
@@ -39,6 +40,19 @@
     // Only browser Push subscription metadata and navigation intents cross this bridge.
     gasWindow.postMessage({source:'PPD_PWA',type,...extra},gasOrigin);
   }
+  function requestAuthResync(){
+    // The script.google.com outer iframe can contain a nested googleusercontent frame.
+    // Both receive a query; only the trusted GAS UI is allowed to answer.
+    const msg={source:'PPD_PWA',type:'PPD_AUTH_QUERY'};
+    try{iframe.contentWindow?.postMessage(msg,'https://script.google.com');}catch(e){}
+    if(gasWindow&&gasOrigin)postToGAS('PPD_AUTH_QUERY');
+  }
+  iframe.addEventListener('load',()=>{bridgeProbeCount=0;requestAuthResync();});
+  const bridgeTimer=setInterval(()=>{
+    if(authReady||++bridgeProbeCount>20){clearInterval(bridgeTimer);return;}
+    requestAuthResync();
+  },3000);
+  window.addEventListener('focus',()=>{if(!authReady)requestAuthResync();});
   async function existingSubscription(){const r=await ensureSW();return r&&r.pushManager?r.pushManager.getSubscription():null;}
   function refreshUI(){
     const p=('Notification' in window)?Notification.permission:'unsupported';
@@ -88,6 +102,7 @@
     if(!gasWindow){gasWindow=event.source;gasOrigin=event.origin;}
     const d=event.data;
     if(d.type==='PPD_AUTH_READY'){
+      postToGAS('PPD_AUTH_ACK');
       authReady=!!d.authenticated;
       if(!authReady){deviceRegistered=false;pushReady=false;}
       else if(Notification.permission==='granted')await registerDevice(true);
@@ -101,10 +116,10 @@
     }
     refreshUI();
   });
-  setup.addEventListener('click',()=>{refreshUI();dialog.showModal();});
+  setup.addEventListener('click',()=>{requestAuthResync();refreshUI();dialog.showModal();});
   $('notification-close-button').addEventListener('click',()=>dialog.close());
   dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
-  enable.addEventListener('click',requestPermissionAndRegister);
+  enable.addEventListener('click',()=>{requestAuthResync();requestPermissionAndRegister();});
   testLocal.addEventListener('click',async()=>{
     if(Notification.permission!=='granted')return;
     try{const r=await ensureSW();await r.showNotification('Point Pedro Indoor Court',{body:'Local test only — not a booking notification.',icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:'ppd-local-test',data:{url:new URL('./',location.href).href}});setDetails('Local test notification shown; this is not an end-to-end push test.');}
