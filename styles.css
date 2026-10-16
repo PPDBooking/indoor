@@ -6,7 +6,7 @@ button,a{-webkit-tap-highlight-color:transparent}
 button{font:inherit;cursor:pointer}button:disabled{cursor:not-allowed;opacity:.5}
 button:focus-visible,a:focus-visible{outline:3px solid #ebc56c;outline-offset:2px}
 .app-shell{display:flex;flex-direction:column;max-width:1280px;width:100%;height:100vh;height:100dvh;margin:0 auto;background:#fff;box-shadow:0 0 24px rgba(0,0,0,.035)}
-.utility-bar{display:flex;flex:none;align-items:center;justify-content:space-between;min-height:49px;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 6px) max(9px,env(safe-area-inset-right,0px)) 6px max(10px,env(safe-area-inset-left,0px));background:#fff;border-bottom:1px solid #e3ece8;z-index:5}
+.setup-launcher{position:absolute;z-index:10;bottom:calc(80px + env(safe-area-inset-bottom,0px));right:calc(10px + env(safe-area-inset-right,0px));display:flex;align-items:center;justify-content:center;background:#f3fff8;color:#12513f;border:1px solid #a8d9bc;border-radius:50%;width:40px;height:40px;box-shadow:0 3px 14px #0002;font-size:20px}.setup-indicator{position:absolute;right:1px;top:2px;width:9px;height:9px;border-radius:50%;background:#db8e2f;border:2px solid white}
 .brand{display:flex;align-items:center;min-width:0;gap:8px;text-decoration:none;color:inherit}
 .brand-mark{width:31px;height:31px;border-radius:8px;object-fit:contain;flex:none}
 .brand-copy{display:flex;flex-direction:column;min-width:0;gap:1px;white-space:nowrap}.brand-copy strong{font-size:13px;max-width:min(43vw,235px);overflow:hidden;text-overflow:ellipsis}.brand-copy small{font-size:10px;color:#587369;letter-spacing:.04em;text-transform:uppercase}

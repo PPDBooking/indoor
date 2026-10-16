@@ -1,7 +1,7 @@
 /* Version: 1.0.0.1 – GitHub Pages shell ONLY, not the GAS iframe. */
 'use strict';
-const CACHE_NAME = 'ppd-wrapper-shell-v1.0.0.1';
-const SHELL_FILES = ['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
+const CACHE_NAME = 'ppd-wrapper-shell-v1.0.0.2';
+const SHELL_FILES = ['./','./index.html','./styles.css','./app.js','./manifest.webmanifest','./push-config.json','./icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
 const SCOPE_URL = new URL('./',self.registration.scope);
 const isSameScopeURL = url => url.origin===SCOPE_URL.origin && url.pathname.startsWith(SCOPE_URL.pathname);
 self.addEventListener('install', event => {
@@ -30,10 +30,14 @@ self.addEventListener('push', event => {
   const body=String(data.body || 'You have a new notification.').slice(0,220);
   let safeURL=SCOPE_URL.href;
   try {const u=new URL(data.url||'./',SCOPE_URL);if(isSameScopeURL(u))safeURL=u.href;}catch(_){}
-  event.waitUntil(self.registration.showNotification(title,{
-    body,icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',
-    tag:String(data.tag||'ppd-booking-alert').slice(0,100),data:{url:safeURL}
-  }));
+  event.waitUntil((async()=>{
+    await self.registration.showNotification(title,{
+      body,icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',
+      tag:String(data.tag||'ppd-booking-alert').slice(0,100),data:{url:safeURL}
+    });
+    const clientsList=await self.clients.matchAll({type:'window',includeUncontrolled:true});
+    clientsList.forEach(c=>c.postMessage({type:'PPD_PUSH_RECEIVED'}));
+  })());
 });
 self.addEventListener('notificationclick', event => {
   event.notification.close();
