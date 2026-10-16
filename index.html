@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#12513f">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="PPD Court">
+  <meta name="description" content="Point Pedro Indoor Court booking portal">
+  <meta name="referrer" content="strict-origin-when-cross-origin">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="stylesheet" href="./styles.css">
+  <title>Point Pedro Indoor Court</title>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="utility-bar">
+      <a class="brand" href="./" aria-label="Point Pedro Indoor Court home">
+        <img class="brand-mark" src="./icons/icon-192.png" alt="" width="31" height="31">
+        <span class="brand-copy"><strong>Point Pedro Indoor Court</strong><small>Booking Portal</small></span>
+      </a>
+      <div class="bar-actions">
+        <button id="install-button" class="action-button install-button" type="button" hidden aria-label="Install App">Install</button>
+        <button id="notification-settings-button" class="action-button notification-action" type="button" aria-haspopup="dialog" aria-controls="notification-dialog">
+          <svg viewBox="0 0 24 24" aria-hidden="true" width="17" height="17" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 9h18c0-2-3-2-3-9"/><path d="M10 21h4"/></svg>
+          <span>Push</span>
+          <span id="push-dot" class="push-dot" aria-hidden="true"></span>
+        </button>
+        <a class="external-button" href="https://script.google.com/macros/s/AKfycbzJ2ubGieS2x4NnnULV7voN9SvgvrijmkAfdjOu-T3uC_xGlJv8Ce0EQVKXmBwqM4W6/exec" target="_blank" rel="noopener noreferrer" title="Open Google Apps Script directly" aria-label="Open booking app directly">
+          <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h6v6"/><path d="M10 14 20 4"/><path d="M20 14v6H4V4h6"/></svg>
+        </a>
+      </div>
+    </header>
+    <main class="frame-area" id="frame-area">
+      <iframe
+        id="booking-frame"
+        title="Point Pedro Indoor Court booking application"
+        src="https://script.google.com/macros/s/AKfycbzJ2ubGieS2x4NnnULV7voN9SvgvrijmkAfdjOu-T3uC_xGlJv8Ce0EQVKXmBwqM4W6/exec"
+        loading="eager"
+        allow="fullscreen; clipboard-read; clipboard-write"
+        referrerpolicy="strict-origin-when-cross-origin"
+      ></iframe>
+      <div id="offline-note" class="offline-note" role="status" hidden>Internet connection lost. Existing booking content may not load until you reconnect.</div>
+    </main>
+  </div>
+  <dialog id="notification-dialog" aria-labelledby="notifications-title">
+    <div class="dialog-header">
+      <div class="dialog-heading">
+        <div class="dialog-icon" aria-hidden="true">🔔</div>
+        <div><h1 id="notifications-title">Mobile notifications</h1><p>Push settings for this device</p></div>
+      </div>
+      <button id="notification-close-button" class="close-button" type="button" aria-label="Close notification settings">×</button>
+    </div>
+    <div class="dialog-body">
+      <div class="notice-box">
+        <p><strong>Golden Bell stays in your booking app.</strong> This setting controls permission for phone notifications while the app is closed.</p>
+      </div>
+      <div class="status-line"><span>Notification permission</span><strong id="permission-status">Checking…</strong></div>
+      <div class="status-line"><span>Background push delivery</span><strong class="pending">Not connected</strong></div>
+      <p id="notification-details" class="support-text" role="status" aria-live="polite">Checking browser support…</p>
+      <button id="enable-notifications-button" class="primary-button" type="button">Enable notifications</button>
+      <button id="test-notification-button" class="secondary-button" type="button" disabled>Show a local test notification</button>
+      <p class="fine-print">A local test proves device permission only. Real booking push requires a securely authenticated server-side sender, user/device registration and a push provider. This package does not send live booking alerts.</p>
+      <div id="ios-install-tip" class="ios-install-tip" hidden>On iPhone: open this site in Safari, tap <strong>Share → Add to Home Screen</strong>, then launch the installed app and choose Enable notifications.</div>
+    </div>
+  </dialog>
+</body>
+</html>

@@ -1,0 +1,25 @@
+*{box-sizing:border-box}
+:root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172b2a;background:#ecf2ee;font-size:14px;-webkit-text-size-adjust:100%;font-synthesis:none}
+html,body{width:100%;height:100%;height:100dvh;margin:0;overflow:hidden;overscroll-behavior:none}
+body{touch-action:pan-x pan-y}
+button,a{-webkit-tap-highlight-color:transparent}
+button{font:inherit;cursor:pointer}button:disabled{cursor:not-allowed;opacity:.5}
+button:focus-visible,a:focus-visible{outline:3px solid #ebc56c;outline-offset:2px}
+.app-shell{display:flex;flex-direction:column;max-width:1280px;width:100%;height:100vh;height:100dvh;margin:0 auto;background:#fff;box-shadow:0 0 24px rgba(0,0,0,.035)}
+.utility-bar{display:flex;flex:none;align-items:center;justify-content:space-between;min-height:49px;gap:8px;padding:calc(env(safe-area-inset-top,0px) + 6px) max(9px,env(safe-area-inset-right,0px)) 6px max(10px,env(safe-area-inset-left,0px));background:#fff;border-bottom:1px solid #e3ece8;z-index:5}
+.brand{display:flex;align-items:center;min-width:0;gap:8px;text-decoration:none;color:inherit}
+.brand-mark{width:31px;height:31px;border-radius:8px;object-fit:contain;flex:none}
+.brand-copy{display:flex;flex-direction:column;min-width:0;gap:1px;white-space:nowrap}.brand-copy strong{font-size:13px;max-width:min(43vw,235px);overflow:hidden;text-overflow:ellipsis}.brand-copy small{font-size:10px;color:#587369;letter-spacing:.04em;text-transform:uppercase}
+.bar-actions{display:flex;align-items:center;gap:6px;flex:none}
+.action-button,.external-button{min-height:33px;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:#f1f6f3;color:#12513f;border:1px solid #d6e3dc;border-radius:9px;text-decoration:none;padding:0 10px;white-space:nowrap;font-weight:650;font-size:12px}
+.external-button{width:35px;padding:0}.notification-action{background:#12513f;color:#fff;border-color:#12513f}.push-dot{height:6px;width:6px;border-radius:50%;background:#efc773;display:inline-block}
+.frame-area{flex:1 1 auto;min-height:0;position:relative;overflow:hidden;background:#fff}
+#booking-frame{display:block;border:0;width:100%;height:100%;min-height:0;background:white;-webkit-overflow-scrolling:touch}
+.offline-note{position:absolute;left:50%;transform:translateX(-50%);bottom:calc(12px + env(safe-area-inset-bottom,0px));width:min(90%,520px);border-radius:11px;background:#fff2d6;border:1px solid #e9d1a0;padding:10px 12px;text-align:center;font-size:12px;color:#734d03;box-shadow:0 6px 22px #0002;pointer-events:none}
+[hidden]{display:none!important}
+dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 38px);overflow-y:auto;padding:0;border:1px solid #e0e9e5;border-radius:16px;color:#21302d;box-shadow:0 20px 90px rgba(12,37,25,.28)}dialog::backdrop{background:rgba(17,33,29,.50);backdrop-filter:blur(2px)}
+.dialog-header{display:flex;align-items:start;justify-content:space-between;padding:19px 19px 14px;border-bottom:1px solid #edf1ef;gap:12px}.dialog-heading{display:flex;align-items:center;gap:10px}.dialog-icon{display:grid;place-items:center;width:36px;height:36px;border-radius:10px;background:#eaf4ee;font-size:18px}h1{font-size:17px;margin:0 0 3px;font-weight:750}.dialog-header p{font-size:12px;margin:0;color:#71817b}.close-button{font-size:25px;line-height:28px;color:#496159;background:transparent;border:0;width:30px}
+.dialog-body{padding:18px 19px 20px;display:flex;flex-direction:column;gap:13px}.notice-box{border-left:3px solid #3d9571;background:#f1f9f3;padding:8px 11px;border-radius:4px}.notice-box p{margin:0;font-size:12px;line-height:1.6}.status-line{display:flex;justify-content:space-between;gap:10px;font-size:12px;align-items:center}.status-line strong{font-size:12px;color:#12513f}.status-line strong.pending{color:#956120}.support-text{font-size:12px;line-height:1.5;color:#52655d;margin:0}
+.primary-button,.secondary-button{border-radius:10px;min-height:43px;font-weight:700}.primary-button{background:#12513f;color:#fff;border:1px solid #12513f}.secondary-button{background:#fff;color:#12513f;border:1px solid #b4cfc1}.fine-print{font-size:11px;line-height:1.55;color:#6a7672;margin:0}.ios-install-tip{background:#f6f8fc;border:1px solid #dae3f6;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}
+@media(max-width:420px){.brand-copy strong{font-size:11px;max-width:39vw}.brand-copy small{font-size:9px}.utility-bar{gap:4px}.bar-actions{gap:4px}.action-button,.external-button{min-height:32px}.notification-action{padding:0 7px}}
+@media (display-mode:standalone){.app-shell{box-shadow:none}}
