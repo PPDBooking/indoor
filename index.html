@@ -12,9 +12,9 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="./styles.css">
+  <link rel="stylesheet" href="./styles.css?v=1.0.0.5">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js" defer></script>
+  <script src="./app.js?v=1.0.0.5" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -30,9 +30,25 @@
         allow="fullscreen; clipboard-read; clipboard-write"
         referrerpolicy="strict-origin-when-cross-origin"
       ></iframe>
+      <section id="startup-screen" class="startup-screen" role="status" aria-live="polite">
+        <div class="startup-card">
+          <div class="startup-spinner" aria-hidden="true"></div>
+          <strong>Opening court app…</strong>
+          <p id="startup-status">Checking your saved session securely.</p>
+          <div id="startup-actions" class="startup-actions" hidden>
+            <button id="startup-retry" class="secondary-button" type="button">Retry loading</button>
+            <a id="startup-direct" class="secondary-button" href="https://script.google.com/macros/s/AKfycbzMNWno4HPBF5Rb-sLLDNfBGFIhtXsZEFQnWtb5TVzC7qIqHp4H21tXms6M7L2NvebX/exec" target="_blank" rel="noopener noreferrer">Open direct GAS</a>
+          </div>
+        </div>
+      </section>
       <div id="offline-note" class="offline-note" role="status" hidden>Internet connection lost. Existing booking content may not load until you reconnect.</div>
     </main>
   </div>
+  <aside id="update-banner" class="update-banner" role="status" aria-live="polite" hidden>
+    <span>A newer court app version is ready.</span>
+    <button id="update-now" type="button">Update now</button>
+    <button id="update-later" type="button" aria-label="Remind me later">Later</button>
+  </aside>
   <dialog id="notification-dialog" aria-labelledby="notifications-title">
     <div class="dialog-header">
       <div class="dialog-heading">

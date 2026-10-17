@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.4: authenticated GAS iframe + PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.5: authenticated GAS iframe + PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -19,6 +19,50 @@
   let gasWindow = null, gasOrigin = '', currentUserId = ''; 
   let bridgeProbeCount = 0;
   const state = {lastError:''};
+  const startup = $('startup-screen'), startupStatus = $('startup-status'), startupActions = $('startup-actions');
+  const updateBanner = $('update-banner');
+  const updateNow = $('update-now'), updateLater = $('update-later');
+  let startupResolved = false, authRestoring = false, pendingWorker = null, workerReloading = false;
+  const GAS_URL = iframe.getAttribute('src');
+  // Keep direct link aligned with the exact iframe URL; no hard-coded second GAS deployment.
+  $('startup-direct').href = GAS_URL;
+  let startupTimer=null;
+  const displayStartup = (message,allowRetry=false) => {
+    startupResolved=false; startup.hidden=false;
+    startupStatus.textContent=message;startupActions.hidden=!allowRetry;
+    if(!allowRetry && !startupTimer){
+      startupTimer=setTimeout(()=>{
+        startupTimer=null;
+        if(!startupResolved)displayStartup('The server is taking longer than expected. You can retry without clearing saved data.',true);
+      },24000);
+    }
+  };
+  const completeStartup = () => {
+    startupResolved=true;startup.hidden=true;startupActions.hidden=true;
+    if(startupTimer){clearTimeout(startupTimer);startupTimer=null;}
+  };
+  displayStartup('Checking your saved session securely.');
+  $('startup-retry').addEventListener('click',()=>{
+    displayStartup('Reconnecting to the court app…');
+    if(gasWindow&&gasOrigin)requestAuthResync();
+    else iframe.src=GAS_URL;
+  });
+  // Do not force reload/clear site data just to install a new application shell.
+  updateNow.addEventListener('click',()=>{
+    if(!pendingWorker)return;
+    if(!confirm('Updating will reload this app. Complete any booking or unsaved form first. Update now?'))return;
+    updateNow.disabled=true;updateNow.textContent='Updating…';
+    workerReloading=true;pendingWorker.postMessage({type:'PPD_SW_ACTIVATE'});
+  });
+  updateLater.addEventListener('click',()=>{updateBanner.hidden=true;});
+  function offerUpdate(worker){
+    if(!worker||!navigator.serviceWorker?.controller)return;
+    pendingWorker=worker;updateBanner.hidden=false;
+    updateNow.disabled=false;updateNow.textContent='Update now';
+  }
+  navigator.serviceWorker?.addEventListener('controllerchange',()=>{
+    if(workerReloading)location.reload();
+  });
 
   /* Optional per-device WebAuthn privacy lock. This masks the entire PWA shell.
      Server-side session verification and role permissions always remain in GAS.
@@ -129,8 +173,12 @@
   document.body.appendChild(bioGate);
   const bioMsg=bioGate.querySelector('.ppd-biometric-message');
   const bioStatus=msg=>{bioMsg.textContent=msg;};
-  let bioBusy=false, bioUnlockGranted=false, bioForgetRequested=false;
-  function bioPresent(){const locked=!!bioLoad()&&!bioUnlockGranted;
+  let bioBusy=false, bioUnlockGranted=false, bioForgetRequested=false, bioUnlockedForUser='';
+  function bioPresent(){
+    // If the GAS server reports a public/expired session, show the login page,
+    // never trap the user behind a local biometric gate with no server session.
+    const hasLocalLock=!!bioLoad();
+    const locked=hasLocalLock&&!bioUnlockGranted&&(!startupResolved||authReady);
     document.body.classList.toggle('ppd-biometric-locked',locked);
     bioGate.hidden=!locked;
     if(locked)bioGate.querySelector('.ppd-biometric-unlock').focus({preventScroll:true});
@@ -141,12 +189,12 @@
   bioGate.querySelector('.ppd-biometric-unlock').addEventListener('click',async()=>{
     if(bioBusy)return;const saved=bioLoad();if(!saved){bioUnlockGranted=true;bioPresent();return;}
     bioBusy=true;bioStatus('Waiting for device verification...');
-    try{await bioVerify(saved);bioUnlockGranted=true;bioPresent();bioReply('Device unlocked.');}
+    try{await bioVerify(saved);bioUnlockedForUser=saved.userId;bioUnlockGranted=true;bioPresent();bioReply('Device unlocked.');}
     catch(e){bioStatus(String(e.message||e));}
     finally{bioBusy=false;}
   });
   bioGate.querySelector('.ppd-biometric-signout').addEventListener('click',()=>{
-    if(!authReady){bioStatus('Waiting for server session. If stuck, clear PWA site data and sign in again.');return;}
+    if(!authReady){bioStatus('Waiting for GAS authentication. Use Retry loading if the connection is delayed.');return;}
     if(!confirm('Sign out on this device and remove the biometric privacy lock?'))return;
     bioForgetRequested=true;bioStatus('Signing out securely...');postToGAS('PPD_BIO_FORGET');
   });
@@ -156,7 +204,7 @@
     try{
       const saved=bioLoad();
       if(saved && saved.userId!==currentUserId)throw new Error('Another user configured this device lock. Please sign out first.');
-      if(saved){await bioVerify(saved);localStorage.removeItem(BIO_STORAGE);bioUnlockGranted=true;
+      if(saved){await bioVerify(saved);localStorage.removeItem(BIO_STORAGE);bioUnlockedForUser='';bioUnlockGranted=true;
         bioReply('Biometric app lock disabled on this device.');bioPresent();}
       else {const created=await bioCreateForUser(currentUserId);bioSave(created);bioUnlockGranted=true;
         bioReply('Biometric app lock enabled. It will be requested on the next app launch.');}
@@ -185,13 +233,13 @@
   document.addEventListener('visibilitychange',()=>{
     if(document.hidden){bioHiddenAt=Date.now();return;}
     if(bioHiddenAt&&Date.now()-bioHiddenAt>5*60*1000&&bioLoad()){
-      bioUnlockGranted=false;bioPresent();
+      bioUnlockedForUser='';bioUnlockGranted=false;bioPresent();
     }
     bioHiddenAt=0;
   });
   window.addEventListener('pagehide',()=>{bioHiddenAt=Date.now();});
   window.addEventListener('pageshow',e=>{if(e.persisted&&bioLoad()){
-    bioUnlockGranted=false;bioPresent();
+    bioUnlockedForUser='';bioUnlockGranted=false;bioPresent();
   }});
 
   const scriptOrigins = ['https://script.google.com','https://script.googleusercontent.com'];
@@ -206,7 +254,14 @@
   async function ensureSW(){
     if(sw)return sw;
     if(!('serviceWorker' in navigator)||!window.isSecureContext)return null;
-    sw=await navigator.serviceWorker.register('./sw.js',{scope:'./'});
+    sw=await navigator.serviceWorker.register('./sw.js',{scope:'./',updateViaCache:'none'});
+    if(sw.waiting)offerUpdate(sw.waiting);
+    sw.addEventListener('updatefound',()=>{
+      const worker=sw.installing;
+      if(worker)worker.addEventListener('statechange',()=>{
+        if(worker.state==='installed'&&navigator.serviceWorker.controller)offerUpdate(worker);
+      });
+    });
     return navigator.serviceWorker.ready;
   }
   function postToGAS(type, extra={}) {
@@ -222,12 +277,27 @@
     try{iframe.contentWindow?.postMessage(msg,'https://script.google.com');}catch(e){}
     if(gasWindow&&gasOrigin)postToGAS('PPD_AUTH_QUERY');
   }
-  iframe.addEventListener('load',()=>{bridgeProbeCount=0;requestAuthResync();});
-  const bridgeTimer=setInterval(()=>{
-    if(authReady||++bridgeProbeCount>20){clearInterval(bridgeTimer);return;}
+  iframe.addEventListener('load',()=>{
+    bridgeProbeCount=0;
+    // An iframe document navigation needs its own server-confirmed auth handshake.
+    if(startupResolved){
+      authReady=false;currentUserId='';
+      displayStartup('Checking the court session after navigation…');
+      bioUnlockGranted=false;bioPresent();
+    }
     requestAuthResync();
+  });
+  // Probe without clearing an active remembered session or replacing the GAS frame.
+  const bridgeTimer=setInterval(()=>{
+    if(!authReady&&++bridgeProbeCount<=180)requestAuthResync();
   },3000);
-  window.addEventListener('focus',()=>{if(!authReady)requestAuthResync();});
+  window.addEventListener('focus',()=>{
+    if(!authReady||authRestoring)requestAuthResync();
+    sw?.update().catch(()=>{});
+  });
+  document.addEventListener('visibilitychange',()=>{
+    if(!document.hidden && (!authReady||authRestoring))requestAuthResync();
+  });
   async function existingSubscription(){const r=await ensureSW();return r&&r.pushManager?r.pushManager.getSubscription():null;}
   function refreshUI(){
     const p=('Notification' in window)?Notification.permission:'unsupported';
@@ -278,20 +348,34 @@
     const d=event.data;
     if(d.type==='PPD_AUTH_READY'){
       postToGAS('PPD_AUTH_ACK');
+      authRestoring=!!d.restoring;
+      if(authRestoring){
+        if(startupActions.hidden)displayStartup('Restoring your saved login securely…');
+        bioPresent();
+        return;
+      }
+      const wasAuthenticated=authReady, previousUser=currentUserId;
       authReady=!!d.authenticated;
       currentUserId=authReady?String(d.userId||''):'';
-      if(authReady&&bioLoad()&&bioLoad().userId!==currentUserId){
-        bioUnlockGranted=false;bioPresent();
+      if(authReady && (!wasAuthenticated || previousUser!==currentUserId)){
+        bioUnlockGranted=!!(bioUnlockedForUser&&bioUnlockedForUser===currentUserId);
       }
       if(!authReady){deviceRegistered=false;pushReady=false;}
-      else if(Notification.permission==='granted')await registerDevice(true);
+      completeStartup();bioPresent();
+      if(authReady&&'Notification' in window&&Notification.permission==='granted')await registerDevice(true);
+    }else if(d.type==='PPD_AUTH_RETRY'){
+      authRestoring=false;
+      // Show GAS's existing Retry secure session screen, retaining its token.
+      completeStartup();bioPresent();
     }else if(d.type==='PPD_BIO_QUERY'){
       if(authReady && currentUserId && String(d.userId||'')===currentUserId)bioReply();
     }else if(d.type==='PPD_BIO_SET'){
       if(authReady && currentUserId && String(d.userId||'')===currentUserId)promptBioChange();
     }else if(d.type==='PPD_BIO_SESSION_GONE'){
-      // GAS just confirmed the old server login expired. No authenticated data remains.
-      localStorage.removeItem(BIO_STORAGE);bioUnlockGranted=true;bioPresent();
+      // Expired GAS session requires password. Wait for GAS to finish loading the
+      // public page before removing our startup shield; keep the opt-in preference.
+      authReady=false;currentUserId='';bioUnlockedForUser='';bioUnlockGranted=true;
+      displayStartup('Your saved session expired. Opening sign-in…');bioPresent();
     }else if(d.type==='PPD_BIO_FORGOTTEN'){
       if(bioForgetRequested && d.ok){localStorage.removeItem(BIO_STORAGE);bioUnlockGranted=true;
         bioPresent();bioForgetRequested=false;location.reload();}
@@ -336,7 +420,7 @@
     vapidKey=String(config.vapidPublicKey||'').trim();if(!/^[A-Za-z0-9_-]{80,100}$/.test(vapidKey))vapidKey='';
     try{await ensureSW();}catch(e){console.warn('Service worker failed:',e);}
     refreshUI();
-    if(Notification.permission==='granted'&&authReady)await registerDevice(true);
+    if('Notification' in window&&Notification.permission==='granted'&&authReady)await registerDevice(true);
   }).catch(e=>{refreshUI();console.warn('Push config load failed:',e);});
   refreshUI();
 })();

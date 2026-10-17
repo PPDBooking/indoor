@@ -1,7 +1,7 @@
 *{box-sizing:border-box}
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172b2a;background:#ecf2ee;font-size:14px;-webkit-text-size-adjust:100%;font-synthesis:none}
 html,body{width:100%;height:100%;height:100dvh;margin:0;overflow:hidden;overscroll-behavior:none}
-body{touch-action:pan-x pan-y}
+body{touch-action:pan-y}
 button,a{-webkit-tap-highlight-color:transparent}
 button{font:inherit;cursor:pointer}button:disabled{cursor:not-allowed;opacity:.5}
 button:focus-visible,a:focus-visible{outline:3px solid #ebc56c;outline-offset:2px}
@@ -38,3 +38,21 @@ dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 38px);overfl
 .ppd-bio-confirm-content h2{font-size:19px;margin:0}.ppd-bio-confirm-content p{font-size:13px;line-height:1.5;color:#41584c;margin:0}
 .ppd-bio-confirm-content button{min-height:44px;border:1px solid #b5cfbe;border-radius:9px;background:#fff;color:#18513c;font-weight:650}
 .ppd-bio-confirm-content .ppd-bio-confirm-go{background:#12513f;color:white}
+
+/* PWA 1.0.0.5: only the GAS iframe scrolls; the wrapper never moves its bars. */
+html,body{position:relative;overscroll-behavior:none;overflow:hidden}
+.app-shell{height:100vh;height:100dvh;min-height:0;overflow:hidden;overscroll-behavior:none}
+.frame-area{min-height:0;isolation:isolate}
+#booking-frame{touch-action:pan-y;overflow:hidden}
+.startup-screen{position:absolute;z-index:30;inset:0;background:#f4f8f5;display:grid;place-items:center;padding:18px;overflow:auto}
+.startup-card{display:flex;flex-direction:column;align-items:center;max-width:365px;width:100%;gap:12px;text-align:center;padding:25px 16px;color:#19543f}
+.startup-card strong{font-size:16px}.startup-card p{margin:0;font-size:13px;color:#526a5c;line-height:1.5}
+.startup-spinner{width:29px;height:29px;border:3px solid #c3dfd0;border-top-color:#136045;border-radius:50%;animation:ppd-startup-spin .7s linear infinite}
+@keyframes ppd-startup-spin{to{transform:rotate(360deg)}}
+.startup-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:5px}
+.startup-actions a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;padding:0 12px}
+.update-banner{position:fixed;z-index:70;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));width:min(94%,490px);background:#fff;color:#153a2e;border:1px solid #b9d7c9;box-shadow:0 8px 35px #0003;padding:12px;border-radius:12px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:13px}
+.update-banner button{border:1px solid #abcaba;border-radius:8px;background:#12513f;color:white;min-height:36px;padding:0 10px;font-weight:650}
+.update-banner button:last-child{background:#fff;color:#12513f}
+@media(max-width:600px){.app-shell{box-shadow:none}.startup-screen{padding-bottom:calc(22px + env(safe-area-inset-bottom,0px))}}
+@media(prefers-reduced-motion:reduce){.startup-spinner{animation:none;border-top-color:#136045}}
