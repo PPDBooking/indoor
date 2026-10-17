@@ -1,6 +1,6 @@
 *{box-sizing:border-box}
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172b2a;background:#ecf2ee;font-size:14px;-webkit-text-size-adjust:100%;font-synthesis:none}
-html,body{width:100%;height:100%;height:100dvh;margin:0;overflow:hidden;overscroll-behavior:none}
+html,body{width:100%;height:100%;height:100dvh;margin:0;overflow:hidden;overscroll-behavior:none;background:#075b43}
 body{touch-action:pan-y}
 button,a{-webkit-tap-highlight-color:transparent}
 button{font:inherit;cursor:pointer}button:disabled{cursor:not-allowed;opacity:.5}
@@ -23,6 +23,11 @@ dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 38px);overfl
 .primary-button,.secondary-button{border-radius:10px;min-height:43px;font-weight:700}.primary-button{background:#12513f;color:#fff;border:1px solid #12513f}.secondary-button{background:#fff;color:#12513f;border:1px solid #b4cfc1}.fine-print{font-size:11px;line-height:1.55;color:#6a7672;margin:0}.ios-install-tip{background:#f6f8fc;border:1px solid #dae3f6;border-radius:9px;padding:10px;font-size:12px;line-height:1.5}
 @media(max-width:420px){.brand-copy strong{font-size:11px;max-width:39vw}.brand-copy small{font-size:9px}.utility-bar{gap:4px}.bar-actions{gap:4px}.action-button,.external-button{min-height:32px}.notification-action{padding:0 7px}}
 @media (display-mode:standalone){.app-shell{box-shadow:none}}
+@media (max-width:900px){
+  /* iOS standalone detected by navigator.standalone or display-mode. */
+  html.ppd-standalone .app-shell{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
+    background:linear-gradient(to bottom,#075b43 0%,#075b43 50%,#173244 50%,#173244 100%)}
+}
 
 /* Biometric privacy gate: isolated PWA root component, no booking UI overrides. */
 .ppd-biometric-gate{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:20px;background:#eaf4ed;color:#164330}

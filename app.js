@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.5: authenticated GAS iframe + PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.6: authenticated GAS iframe + PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -14,9 +14,18 @@
   const permissionLabel = $('permission-status');
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+  document.documentElement.classList.toggle('ppd-standalone',standalone());
   const hasApis = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window) && window.isSecureContext;
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
-  let gasWindow = null, gasOrigin = '', currentUserId = ''; 
+  let gasWindow = null, gasOrigin = '', currentUserId = '';
+  const REMEMBER_STORAGE='ppd_pwa_remembered_session_v1';
+  const savedSession=()=>{try{const v=JSON.parse(localStorage.getItem(REMEMBER_STORAGE)||'null');
+    return v && typeof v.token==='string' && /^[A-Za-z0-9_.-]{16,1024}$/.test(v.token) && typeof v.userId==='string' &&
+      Date.now()-Number(v.savedAt)>=0 && Date.now()-Number(v.savedAt)<91*86400000 ? v : null;
+  }catch(_){return null;}};
+  const clearSavedSession=()=>{try{localStorage.removeItem(REMEMBER_STORAGE);}catch(_){}};
+  const storeRememberedSession=(token,userId)=>{if(!/^[A-Za-z0-9_.-]{16,1024}$/.test(String(token))||!userId)return;
+    try{localStorage.setItem(REMEMBER_STORAGE,JSON.stringify({token:String(token),userId:String(userId),savedAt:Date.now()}));}catch(_){}}; 
   let bridgeProbeCount = 0;
   const state = {lastError:''};
   const startup = $('startup-screen'), startupStatus = $('startup-status'), startupActions = $('startup-actions');
@@ -66,7 +75,8 @@
 
   /* Optional per-device WebAuthn privacy lock. This masks the entire PWA shell.
      Server-side session verification and role permissions always remain in GAS.
-     No password, GAS token, private signing key or biometric template is stored here. */
+      Only explicitly remembered, server-revocable login tokens are stored at this
+      dedicated PWA origin for iOS session recovery; no passwords or biometric keys. */
   const BIO_STORAGE = 'ppd_bio_local_v1';
   const bioAvailable = () => !!(window.PublicKeyCredential && navigator.credentials && window.crypto?.subtle && window.isSecureContext);
   const bioLoad = () => {try {const x=JSON.parse(localStorage.getItem(BIO_STORAGE)||'null');
@@ -346,7 +356,14 @@
     if(gasWindow && event.source!==gasWindow)return;
     if(!gasWindow){gasWindow=event.source;gasOrigin=event.origin;}
     const d=event.data;
-    if(d.type==='PPD_AUTH_READY'){
+    if(d.type==='PPD_SESSION_REQUEST'){
+      const saved=savedSession();
+      postToGAS('PPD_SESSION_RECOVER',{token:saved?saved.token:''});
+    }else if(d.type==='PPD_SESSION_STORE'){
+      if(d.remembered===true)storeRememberedSession(d.token,d.userId);
+    }else if(d.type==='PPD_SESSION_CLEAR'){
+      clearSavedSession();
+    }else if(d.type==='PPD_AUTH_READY'){
       postToGAS('PPD_AUTH_ACK');
       authRestoring=!!d.restoring;
       if(authRestoring){
@@ -375,6 +392,7 @@
       // Expired GAS session requires password. Wait for GAS to finish loading the
       // public page before removing our startup shield; keep the opt-in preference.
       authReady=false;currentUserId='';bioUnlockedForUser='';bioUnlockGranted=true;
+      clearSavedSession();
       displayStartup('Your saved session expired. Opening sign-in…');bioPresent();
     }else if(d.type==='PPD_BIO_FORGOTTEN'){
       if(bioForgetRequested && d.ok){localStorage.removeItem(BIO_STORAGE);bioUnlockGranted=true;
