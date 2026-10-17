@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.8: authenticated GAS iframe + PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.9: authenticated GAS iframe + PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
