@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.6: authenticated GAS iframe + PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.7: authenticated GAS iframe + PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -37,7 +37,7 @@
   $('startup-direct').href = GAS_URL;
   let startupTimer=null;
   const displayStartup = (message,allowRetry=false) => {
-    startupResolved=false; startup.hidden=false;
+    startupResolved=false; startup.hidden=false; startup.classList.remove('splash-leaving');
     startupStatus.textContent=message;startupActions.hidden=!allowRetry;
     if(!allowRetry && !startupTimer){
       startupTimer=setTimeout(()=>{
@@ -47,7 +47,7 @@
     }
   };
   const completeStartup = () => {
-    startupResolved=true;startup.hidden=true;startupActions.hidden=true;
+    startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');setTimeout(()=>{if(startupResolved)startup.hidden=true;},400);
     if(startupTimer){clearTimeout(startupTimer);startupTimer=null;}
   };
   displayStartup('Checking your saved session securely.');
@@ -364,6 +364,8 @@
     }else if(d.type==='PPD_SESSION_CLEAR'){
       clearSavedSession();
     }else if(d.type==='PPD_AUTH_READY'){
+       if(d.developerName) $('pwa-splash-developer').textContent=String(d.developerName).slice(0,100);
+       if(d.appVersion) $('pwa-splash-version').textContent=String(d.appVersion).slice(0,40);
       postToGAS('PPD_AUTH_ACK');
       authRestoring=!!d.restoring;
       if(authRestoring){

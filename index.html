@@ -12,9 +12,9 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="./styles.css?v=1.0.0.6">
+  <link rel="stylesheet" href="./styles.css?v=1.0.0.7">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js?v=1.0.0.6" defer></script>
+  <script src="./app.js?v=1.0.0.7" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -31,10 +31,15 @@
         referrerpolicy="strict-origin-when-cross-origin"
       ></iframe>
       <section id="startup-screen" class="startup-screen" role="status" aria-live="polite">
-        <div class="startup-card">
-          <div class="startup-spinner" aria-hidden="true"></div>
-          <strong>Opening court app…</strong>
-          <p id="startup-status">Checking your saved session securely.</p>
+        <div class="startup-approved-canvas">
+        <img class="startup-approved-art" src="./splash-approved.webp" alt="Point Pedro Divisional Secretariat Sports Association – Divisional Indoor Court Reservation System" />
+        <div class="startup-approved-credits" aria-label="App credits">
+          <div><small>App Developed by</small><b id="pwa-splash-developer">AA Computers</b></div>
+          <div><small>Version</small><b id="pwa-splash-version">1.0.1.154</b></div>
+        </div>
+        </div>
+        <div class="startup-card" aria-label="Startup status">
+          <p id="startup-status" class="visually-hidden">Checking your saved session securely.</p>
           <div id="startup-actions" class="startup-actions" hidden>
             <button id="startup-retry" class="secondary-button" type="button">Retry loading</button>
             <a id="startup-direct" class="secondary-button" href="https://script.google.com/macros/s/AKfycbzMNWno4HPBF5Rb-sLLDNfBGFIhtXsZEFQnWtb5TVzC7qIqHp4H21tXms6M7L2NvebX/exec" target="_blank" rel="noopener noreferrer">Open direct GAS</a>
