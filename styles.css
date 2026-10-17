@@ -1,4 +1,4 @@
-*{box-sizing:border-box}
+*{box-sizing:border-box;scrollbar-width:none;-ms-overflow-style:none}*::-webkit-scrollbar{width:0;height:0;display:none}
 :root{font-family:system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;color:#172b2a;background:#ecf2ee;font-size:14px;-webkit-text-size-adjust:100%;font-synthesis:none}
 html,body{width:100%;height:100%;height:100dvh;margin:0;overflow:hidden;overscroll-behavior:none;background:#075b43}
 body{touch-action:pan-y}
@@ -49,24 +49,44 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 .app-shell{height:100vh;height:100dvh;min-height:0;overflow:hidden;overscroll-behavior:none}
 .frame-area{min-height:0;isolation:isolate}
 #booking-frame{touch-action:pan-y;overflow:hidden}
-/* Splash uses the exact first approved user screenshot; only live footer credits overlay the sample values. */
-.startup-screen{position:absolute;z-index:30;inset:0;background:#004b36;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;opacity:1;transition:opacity .38s ease;}
-.startup-screen.splash-leaving{opacity:0;pointer-events:none;}
-.startup-approved-canvas{position:relative;flex:none;width:min(100vw,calc(100dvh * 941 / 1672));aspect-ratio:941/1672;max-height:100%;}
-.startup-approved-art{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;object-position:center;}
-.startup-approved-credits{position:absolute;left:3%;right:3%;bottom:3.8%;height:9.8%;display:flex;justify-content:space-around;align-items:center;border-radius:21px;background:rgba(0,44,33,.98);border:1px solid rgba(38,136,89,.8);color:#fff;gap:10px;text-align:left;}
-.startup-approved-credits>div{display:flex;flex-direction:column;gap:5px;min-width:0;max-width:48%;}
-.startup-approved-credits small{font-size:clamp(10px,2.5vw,17px);color:#b6d9c8;}
-.startup-approved-credits b{font-size:clamp(12px,3.2vw,23px);font-weight:750;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
-.startup-card{position:absolute;bottom:17%;left:8%;right:8%;display:flex;flex-direction:column;align-items:center;gap:10px;text-align:center;color:#fff;z-index:2;}
-.startup-card:has(.startup-actions:not([hidden])){padding:14px;border-radius:12px;background:rgba(2,44,33,.95);}
-.startup-card p{margin:0;font-size:12px;color:#e2f2e9;line-height:1.45;}
-.startup-card p.visually-hidden{position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;}
-@keyframes ppd-startup-spin{to{transform:rotate(360deg)}}
-.startup-actions{display:flex;flex-wrap:wrap;justify-content:center;gap:10px;margin-top:5px}
-.startup-actions a{display:inline-flex;align-items:center;justify-content:center;text-decoration:none;padding:0 12px}
+
+/* First approved splash composition, reproduced as responsive DOM/CSS, not an image. */
+.ppdSplashNew{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:max(env(safe-area-inset-top,0px),8px) max(env(safe-area-inset-right,0px),8px) max(env(safe-area-inset-bottom,0px),8px) max(env(safe-area-inset-left,0px),8px);background:radial-gradient(ellipse 75% 35% at 105% 2%,#4baa6b88,transparent 80%),radial-gradient(ellipse 55% 35% at -10% 61%,#469c5099,transparent 80%),radial-gradient(ellipse 68% 34% at 50% 47%,#047051,transparent 85%),linear-gradient(148deg,#002f26 0%,#025b41 45%,#00442f 74%,#003124 100%);color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;transition:opacity .4s ease}
+.ppdSplashNew.splash-leaving,.ppdSplashNew.ppdSplashLeaving{opacity:0;pointer-events:none}
+.ppdSplashNew::before,.ppdSplashNew::after{content:"";position:absolute;z-index:-1;width:155vw;height:55vh;border-radius:50%;border:2px solid rgba(146,223,87,.3);transform:rotate(-33deg);pointer-events:none}
+.ppdSplashNew::before{left:-85vw;top:-24vh}.ppdSplashNew::after{right:-92vw;bottom:-16vh}
+.ppdSplashDecor{position:absolute;z-index:-1;filter:blur(13px);pointer-events:none;opacity:.35}
+.ppdSplashDecorLeft{left:-8%;top:27%;width:34vw;height:35vh;transform:rotate(-38deg);background:radial-gradient(ellipse,#98bd9c,transparent 72%)}
+.ppdSplashDecorRight{right:-8%;top:36%;width:32vw;height:35vh;transform:rotate(25deg);background:radial-gradient(ellipse,#67ae7c,transparent 72%)}
+.ppdSplashInterior{height:100%;max-height:960px;width:min(100%,660px);min-height:0;display:grid;grid-template-rows:minmax(0,1.4fr) minmax(0,1.55fr) minmax(0,.68fr) auto;align-items:center;justify-items:center;gap:clamp(3px,.9dvh,12px);padding:clamp(8px,1.6dvh,22px) clamp(4px,3vw,24px);min-width:0}
+.ppdSplashBrand{width:100%;min-width:0;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:clamp(3px,.7dvh,9px)}
+.ppdSplashLeaves{display:flex;align-items:center;gap:15px;color:#e4cb72;font-size:clamp(18px,3.7dvh,38px);height:1em}.ppdSplashLeaves span{font-size:.45em;color:#f8d579}
+.ppdSplashBrand h1{margin:0;line-height:1.06;font-size:clamp(19px,min(6.6vw,4dvh),53px);font-weight:780;letter-spacing:-.025em;color:#fff7e9;text-shadow:0 3px 6px #00201488;max-width:100%;overflow-wrap:normal;text-wrap:balance}
+.ppdSplashBrand h1 span{display:block}.ppdSplashBrand h1 span:first-child{font-size:1.13em;margin-bottom:.1em}
+.ppdSplashGoldRule{width:min(82%,400px);height:2px;display:flex;align-items:center;justify-content:center;background:linear-gradient(90deg,transparent,#ffe18d 20%,#e6a73b 43%,transparent 48%,transparent 52%,#e6a73b 57%,#ffe18d 80%,transparent);margin:clamp(2px,.65dvh,12px) auto;color:#ffe89b}
+.ppdSplashGoldRule span{font-size:16px;transform:translateY(-1px);background:#07563d;padding:0 7px}
+.ppdSplashSubtitle{display:flex;flex-direction:column;gap:clamp(1px,.6dvh,8px);line-height:1.15;font-size:clamp(13px,min(4.6vw,2.7dvh),31px)}.ppdSplashSubtitle strong{color:#d8f5dc;font-size:1.17em}.ppdSplashSubtitle span{color:#f8fdfa}
+.ppdSplashLogoSpace{position:relative;display:grid;place-items:center;width:100%;height:100%;min-height:0}
+.ppdSplashRealLogo{position:relative;z-index:1;display:block;max-width:100%;max-height:100%;height:100%;width:auto;object-fit:contain;background:transparent;border:0;filter:drop-shadow(0 9px 9px #00261988)}
+.ppdSplashRealLogo:not([src]),.ppdSplashRealLogo[src=""]{visibility:hidden}
+.ppdSplashLogoWaiting{position:absolute;width:60px;height:60px;border:3px solid #bddd9d55;border-top-color:#f5d976;border-radius:50%;animation:ppdSplashSpin 1.15s linear infinite}
+.ppdSplashLogoSpace:has(.ppdSplashRealLogo[src]:not([src=""])) .ppdSplashLogoWaiting{display:none}
+@keyframes ppdSplashSpin{to{transform:rotate(360deg)}}
+.ppdSplashLoading{align-self:center;width:min(88%,410px);display:flex;flex-direction:column;align-items:center;text-align:center;gap:clamp(5px,1dvh,13px)}
+.ppdSplashProgress{height:clamp(12px,2.4dvh,19px);width:100%;border-radius:999px;background:#02402e;border:1px solid #72b77a;box-shadow:inset 0 2px 6px #002b23,0 2px 12px #002b2355;overflow:hidden;padding:2px}
+.ppdSplashProgress span{display:block;width:35%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#07b85a,#37ee71,#e3ff8d);box-shadow:0 0 12px #83ee64;animation:ppdSplashTravel 2.1s ease-in-out infinite}
+@keyframes ppdSplashTravel{0%{transform:translateX(-110%)}50%{transform:translateX(150%)}100%{transform:translateX(315%)}}
+.ppdSplashLoading p{font-size:clamp(13px,3.7vw,21px);margin:0;color:#fafdf9}.ppdSplashLoading small{font-size:clamp(10px,2.5vw,14px);color:#b1d2be;letter-spacing:.17em;text-transform:uppercase}
+.ppdSplashCredits{width:100%;min-height:clamp(74px,12dvh,110px);padding:clamp(10px,1.8dvh,19px);display:grid;grid-template-columns:1fr 1px 1fr;align-items:center;gap:clamp(7px,2vw,25px);border:1px solid #286b50;border-radius:clamp(14px,3vw,24px);background:rgba(0,37,29,.92);box-shadow:0 12px 30px #002a2677}
+.ppdSplashCredit{min-width:0;display:flex;align-items:center;justify-content:center;gap:clamp(5px,1.7vw,14px);text-align:left}.ppdSplashCredit>div{min-width:0;display:flex;flex-direction:column;gap:3px}.ppdSplashCredit small{color:#b6d9c8;font-size:clamp(10px,2.6vw,15px)}.ppdSplashCredit b{color:#fff;font-size:clamp(12px,3.25vw,19px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ppdSplashCreditIcon{font-size:clamp(18px,5vw,32px);color:#bdf4c1}.ppdSplashCreditDivider{height:70%;background:#87a996}
+@media(max-height:640px){.ppdSplashInterior{grid-template-rows:minmax(0,1.3fr) minmax(0,1.3fr) minmax(0,.5fr) auto}.ppdSplashLeaves{display:none}.ppdSplashGoldRule{margin:5px auto}.ppdSplashBrand{gap:3px}.ppdSplashCredits{min-height:56px;padding:8px}}
+@media(prefers-reduced-motion:reduce){.ppdSplashNew{transition:none}.ppdSplashProgress span{animation:none;width:100%}.ppdSplashLogoWaiting{animation:none}}
+
+.ppdSplashStatus{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;white-space:nowrap;clip-path:inset(50%)}
+.startup-actions{position:absolute;z-index:3;bottom:17%;left:10%;right:10%;display:flex;align-items:center;justify-content:center;flex-wrap:wrap;gap:8px;padding:12px;border-radius:12px;background:#00382e}
+.startup-actions a{display:flex;align-items:center;text-decoration:none;padding:10px}
 .update-banner{position:fixed;z-index:70;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));width:min(94%,490px);background:#fff;color:#153a2e;border:1px solid #b9d7c9;box-shadow:0 8px 35px #0003;padding:12px;border-radius:12px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:13px}
 .update-banner button{border:1px solid #abcaba;border-radius:8px;background:#12513f;color:white;min-height:36px;padding:0 10px;font-weight:650}
 .update-banner button:last-child{background:#fff;color:#12513f}
-@media(max-width:600px){.app-shell{box-shadow:none}.startup-screen{padding-bottom:0}}
+@media(max-width:600px){.app-shell{box-shadow:none}}
 @media(prefers-reduced-motion:reduce){.startup-screen{transition:none}}

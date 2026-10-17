@@ -12,9 +12,9 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="./styles.css?v=1.0.0.7">
+  <link rel="stylesheet" href="./styles.css?v=1.0.0.8">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js?v=1.0.0.7" defer></script>
+  <script src="./app.js?v=1.0.0.8" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -30,25 +30,26 @@
         allow="fullscreen; clipboard-read; clipboard-write"
         referrerpolicy="strict-origin-when-cross-origin"
       ></iframe>
-      <section id="startup-screen" class="startup-screen" role="status" aria-live="polite">
-        <div class="startup-approved-canvas">
-        <img class="startup-approved-art" src="./splash-approved.webp" alt="Point Pedro Divisional Secretariat Sports Association – Divisional Indoor Court Reservation System" />
-        <div class="startup-approved-credits" aria-label="App credits">
-          <div><small>App Developed by</small><b id="pwa-splash-developer">AA Computers</b></div>
-          <div><small>Version</small><b id="pwa-splash-version">1.0.1.154</b></div>
-        </div>
-        </div>
-        <div class="startup-card" aria-label="Startup status">
-          <p id="startup-status" class="visually-hidden">Checking your saved session securely.</p>
-          <div id="startup-actions" class="startup-actions" hidden>
-            <button id="startup-retry" class="secondary-button" type="button">Retry loading</button>
-            <a id="startup-direct" class="secondary-button" href="https://script.google.com/macros/s/AKfycbzMNWno4HPBF5Rb-sLLDNfBGFIhtXsZEFQnWtb5TVzC7qIqHp4H21tXms6M7L2NvebX/exec" target="_blank" rel="noopener noreferrer">Open direct GAS</a>
-          </div>
-        </div>
-      </section>
       <div id="offline-note" class="offline-note" role="status" hidden>Internet connection lost. Existing booking content may not load until you reconnect.</div>
     </main>
   </div>
+<section id="startup-screen" class="ppdSplashNew" role="status" aria-label="Preparing court application" aria-live="polite">
+  <div class="ppdSplashDecor ppdSplashDecorLeft" aria-hidden="true"></div>
+  <div class="ppdSplashDecor ppdSplashDecorRight" aria-hidden="true"></div>
+  <div class="ppdSplashInterior">
+    <div class="ppdSplashBrand">
+      <div class="ppdSplashLeaves" aria-hidden="true"><span>✦</span>❧<span>✦</span></div>
+      <h1><span>Point Pedro</span><span>Divisional Secretariat Sports Association</span></h1>
+      <div class="ppdSplashGoldRule" aria-hidden="true"><span>❧</span></div>
+      <div class="ppdSplashSubtitle"><strong>Divisional Indoor</strong><span>Court Reservation System</span></div>
+    </div>
+    <div class="ppdSplashLogoSpace"><img id="pwa-splash-logo" class="ppdSplashRealLogo"  alt="Official Point Pedro Divisional Secretariat Sports Association logo"><span class="ppdSplashLogoWaiting" aria-hidden="true"></span></div>
+    <div class="ppdSplashLoading"><div class="ppdSplashProgress" role="progressbar" aria-label="Application loading"><span></span></div><p id="startup-screen-text">Preparing your application...</p><small>Please wait</small></div>
+    <div class="ppdSplashCredits"><div class="ppdSplashCredit"><span class="ppdSplashCreditIcon" aria-hidden="true">▣</span><div><small>App Developed by</small><b id="pwa-splash-developer">AA Computers</b></div></div><span class="ppdSplashCreditDivider"></span><div class="ppdSplashCredit"><span class="ppdSplashCreditIcon" aria-hidden="true">◆</span><div><small>Version</small><b id="pwa-splash-version">1.0.1.155</b></div></div></div>
+  </div>
+  <p id="startup-status" class="ppdSplashStatus" aria-live="polite">Checking your saved session securely.</p>
+  <div id="startup-actions" class="startup-actions" hidden><button id="startup-retry" class="secondary-button" type="button">Retry loading</button><a id="startup-direct" class="secondary-button" target="_blank" rel="noopener noreferrer">Open direct GAS</a></div>
+</section>
   <aside id="update-banner" class="update-banner" role="status" aria-live="polite" hidden>
     <span>A newer court app version is ready.</span>
     <button id="update-now" type="button">Update now</button>

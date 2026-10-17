@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.7: authenticated GAS iframe + PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.8: authenticated GAS iframe + PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -29,6 +29,7 @@
   let bridgeProbeCount = 0;
   const state = {lastError:''};
   const startup = $('startup-screen'), startupStatus = $('startup-status'), startupActions = $('startup-actions');
+  $('pwa-splash-logo').addEventListener('error',function(){this.removeAttribute('src');});
   const updateBanner = $('update-banner');
   const updateNow = $('update-now'), updateLater = $('update-later');
   let startupResolved = false, authRestoring = false, pendingWorker = null, workerReloading = false;
@@ -38,7 +39,7 @@
   let startupTimer=null;
   const displayStartup = (message,allowRetry=false) => {
     startupResolved=false; startup.hidden=false; startup.classList.remove('splash-leaving');
-    startupStatus.textContent=message;startupActions.hidden=!allowRetry;
+    startupStatus.textContent=message;const splashLabel=$('startup-screen-text');if(splashLabel)splashLabel.textContent=allowRetry?'Connection needs attention':(message==='Checking your saved session securely.'?'Preparing your application...':message);startupActions.hidden=!allowRetry;
     if(!allowRetry && !startupTimer){
       startupTimer=setTimeout(()=>{
         startupTimer=null;
@@ -50,6 +51,7 @@
     startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');setTimeout(()=>{if(startupResolved)startup.hidden=true;},400);
     if(startupTimer){clearTimeout(startupTimer);startupTimer=null;}
   };
+  try{const lastBrand=localStorage.getItem('ppd_public_brand_logo');if(lastBrand && /^https:\/\//i.test(lastBrand))$('pwa-splash-logo').src=lastBrand;}catch(_){}
   displayStartup('Checking your saved session securely.');
   $('startup-retry').addEventListener('click',()=>{
     displayStartup('Reconnecting to the court app…');
@@ -366,6 +368,13 @@
     }else if(d.type==='PPD_AUTH_READY'){
        if(d.developerName) $('pwa-splash-developer').textContent=String(d.developerName).slice(0,100);
        if(d.appVersion) $('pwa-splash-version').textContent=String(d.appVersion).slice(0,40);
+       if(typeof d.logoUrl==='string' && $('pwa-splash-logo')){
+         const candidate=d.logoUrl.trim();
+         if(/^https:\/\//i.test(candidate) || /^data:image\/(?:png|jpeg|webp);base64,/i.test(candidate)){
+           $('pwa-splash-logo').src=candidate;
+           try{localStorage.setItem('ppd_public_brand_logo',candidate.length<8000?candidate:'');}catch(_){/* optional public metadata */}
+         }
+       }
       postToGAS('PPD_AUTH_ACK');
       authRestoring=!!d.restoring;
       if(authRestoring){
