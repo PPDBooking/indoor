@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.9: authenticated GAS iframe + PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.10: authenticated GAS iframe + PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -30,6 +30,7 @@
   const state = {lastError:''};
   const startup = $('startup-screen'), startupStatus = $('startup-status'), startupActions = $('startup-actions');
   $('pwa-splash-logo').addEventListener('error',function(){this.removeAttribute('src');});
+  for (const e of [$('pwa-splash-logo')]) { e.addEventListener('contextmenu',event=>event.preventDefault()); e.addEventListener('dragstart',event=>event.preventDefault()); }
   const updateBanner = $('update-banner');
   const updateNow = $('update-now'), updateLater = $('update-later');
   let startupResolved = false, authRestoring = false, pendingWorker = null, workerReloading = false;
