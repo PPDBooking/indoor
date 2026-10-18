@@ -12,9 +12,9 @@
   <link rel="manifest" href="./manifest.webmanifest">
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
-  <link rel="stylesheet" href="./styles.css?v=1.0.0.10">
+  <link rel="stylesheet" href="./styles.css?v=1.0.0.11">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js?v=1.0.0.10" defer></script>
+  <script src="./app.js?v=1.0.0.11" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -25,7 +25,8 @@
       <iframe
         id="booking-frame"
         title="Point Pedro Indoor Court booking application"
-        src="https://script.google.com/macros/s/AKfycbzMNWno4HPBF5Rb-sLLDNfBGFIhtXsZEFQnWtb5TVzC7qIqHp4H21tXms6M7L2NvebX/exec"
+        src="about:blank"
+        data-gas-url="https://script.google.com/macros/s/AKfycbzMNWno4HPBF5Rb-sLLDNfBGFIhtXsZEFQnWtb5TVzC7qIqHp4H21tXms6M7L2NvebX/exec"
         loading="eager"
         allow="fullscreen; clipboard-read; clipboard-write"
         referrerpolicy="strict-origin-when-cross-origin"
@@ -43,12 +44,12 @@
       <div class="ppdSplashGoldRule" aria-hidden="true"><span>❧</span></div>
       <div class="ppdSplashSubtitle"><strong class="ppdSplashSubtitleDesktop">Point Pedro Divisional Indoor</strong><strong class="ppdSplashSubtitleMobile">Divisional Indoor</strong><span>Court Reservation System</span></div>
     </div>
-    <div class="ppdSplashLogoSpace"><img id="pwa-splash-logo" draggable="false" oncontextmenu="return false" class="ppdSplashRealLogo"  alt="Official Point Pedro Divisional Secretariat Sports Association logo"><span class="ppdSplashLogoWaiting" aria-hidden="true"></span></div>
+    <div class="ppdSplashLogoSpace"><img id="pwa-splash-logo" draggable="false" oncontextmenu="return false" class="ppdSplashRealLogo" onload="this.classList.add('ppdLogoReady')" alt="Official Point Pedro Divisional Secretariat Sports Association logo"><span class="ppdSplashLogoWaiting" aria-hidden="true"></span></div>
     <div class="ppdSplashLoading"><div class="ppdSplashProgress" role="progressbar" aria-label="Application loading"><span></span></div><p id="startup-screen-text">Preparing your application...</p><small>Please wait</small></div>
-    <div class="ppdSplashCredits"><div class="ppdSplashCredit"><span class="ppdSplashCreditIcon" aria-hidden="true">▣</span><div><small>App Developed by</small><b id="pwa-splash-developer">AA Computers</b></div></div><span class="ppdSplashCreditDivider"></span><div class="ppdSplashCredit"><span class="ppdSplashCreditIcon" aria-hidden="true">◆</span><div><small>Version</small><b id="pwa-splash-version">1.0.1.157</b></div></div></div>
+    <div class="ppdSplashCredits"><div class="ppdSplashCredit"><span class="ppdSplashCreditIcon" aria-hidden="true">▣</span><div><small>App Developed by</small><b id="pwa-splash-developer">AA Computers</b></div></div><span class="ppdSplashCreditDivider"></span><div class="ppdSplashCredit"><span class="ppdSplashCreditIcon" aria-hidden="true">◆</span><div><small>Version</small><b id="pwa-splash-version">1.0.1.159</b></div></div></div>
   </div>
   <p id="startup-status" class="ppdSplashStatus" aria-live="polite">Checking your saved session securely.</p>
-  <div id="startup-actions" class="startup-actions" hidden><button id="startup-retry" class="secondary-button" type="button">Retry loading</button><a id="startup-direct" class="secondary-button" target="_blank" rel="noopener noreferrer">Open direct GAS</a></div>
+  <div id="startup-actions" class="startup-actions" hidden><button id="startup-retry" class="secondary-button" type="button">Retry loading</button></div>
 </section>
   <aside id="update-banner" class="update-banner" role="status" aria-live="polite" hidden>
     <span>A newer court app version is ready.</span>

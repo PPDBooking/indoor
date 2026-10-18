@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.10: authenticated GAS iframe + PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.11: email-route forwarding, splash fade and PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -29,14 +29,26 @@
   let bridgeProbeCount = 0;
   const state = {lastError:''};
   const startup = $('startup-screen'), startupStatus = $('startup-status'), startupActions = $('startup-actions');
-  $('pwa-splash-logo').addEventListener('error',function(){this.removeAttribute('src');});
-  for (const e of [$('pwa-splash-logo')]) { e.addEventListener('contextmenu',event=>event.preventDefault()); e.addEventListener('dragstart',event=>event.preventDefault()); }
+  const splashLogo=$('pwa-splash-logo');
+  splashLogo.addEventListener('error',function(){this.removeAttribute('src');this.classList.remove('ppdLogoReady');});
+  splashLogo.addEventListener('load',function(){if(this.naturalWidth>0)this.classList.add('ppdLogoReady');});
+  if(splashLogo.complete&&splashLogo.naturalWidth>0)splashLogo.classList.add('ppdLogoReady');
+  for (const e of [splashLogo]) { e.addEventListener('contextmenu',event=>event.preventDefault()); e.addEventListener('dragstart',event=>event.preventDefault()); }
   const updateBanner = $('update-banner');
   const updateNow = $('update-now'), updateLater = $('update-later');
   let startupResolved = false, authRestoring = false, pendingWorker = null, workerReloading = false;
-  const GAS_URL = iframe.getAttribute('src');
-  // Keep direct link aligned with the exact iframe URL; no hard-coded second GAS deployment.
-  $('startup-direct').href = GAS_URL;
+  const GAS_BASE_URL = iframe.dataset.gasUrl || iframe.getAttribute('src');
+  // Email links always open this GitHub Pages frontend. Only the wrapper forwards the
+  // approved route parameters to the private GAS iframe so the correct page opens after login.
+  const GAS_URL = (() => {
+    const target = new URL(GAS_BASE_URL, location.href);
+    const launch = new URLSearchParams(location.search);
+    ['login','username','target','request','booking','action'].forEach(key => {
+      if (launch.has(key)) target.searchParams.set(key, launch.get(key));
+    });
+    return target.href;
+  })();
+  iframe.src = GAS_URL;
   let startupTimer=null;
   const displayStartup = (message,allowRetry=false) => {
     startupResolved=false; startup.hidden=false; startup.classList.remove('splash-leaving');
