@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.11: email-route forwarding, splash fade and PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.12: email-route forwarding, splash fade and PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
