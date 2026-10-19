@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.17: splash first paint, temporary wrapper version, email-route forwarding and PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.18: splash first paint, temporary wrapper version, email-route forwarding and PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -42,7 +42,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.17':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.18':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -58,10 +58,10 @@
     if(version)$('pwa-splash-version').textContent=version;
     if(persist&&(typeof data.developerName==='string'||version)){try{
       const previous=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'{}');
-      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.168').slice(0,40)}));
+      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.169').slice(0,40)}));
     }catch(_){}}
   }
-  try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta)applySplashMetadata(savedSplashMeta,false);}catch(_){}
+  try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta&&typeof savedSplashMeta.developerName==='string')applySplashMetadata({developerName:savedSplashMeta.developerName},false);}catch(_){}
   splashLogo.addEventListener('error',function(){this.removeAttribute('src');this.classList.remove('ppdLogoReady');});
   splashLogo.addEventListener('load',function(){if(this.naturalWidth>0)this.classList.add('ppdLogoReady');});
   if(splashLogo.complete&&splashLogo.naturalWidth>0)splashLogo.classList.add('ppdLogoReady');

@@ -53,18 +53,18 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 
 /* Approved badminton artwork only: no gradient overlay or decorative artwork layer. */
 .ppdSplashNew{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:max(env(safe-area-inset-top,0px),8px) max(env(safe-area-inset-right,0px),8px) max(env(safe-area-inset-bottom,0px),8px) max(env(safe-area-inset-left,0px),8px);background-color:#00382e;background-image:none;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;transition:opacity .4s ease}
-.ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .22s ease;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.17");background-position:center center;background-size:cover}}
+.ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;transition:none;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
+@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.18");background-position:center center;background-size:cover}}
 .ppdSplashNew.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
 .ppdSplashNew.splash-leaving,.ppdSplashNew.ppdSplashLeaving{opacity:0;pointer-events:none}
 
-.ppdSplashInterior{position:relative;z-index:1;height:100%;max-height:900px;width:min(100%,660px);min-height:0;display:grid;grid-template-rows:minmax(0,.94fr) minmax(0,.78fr) auto auto auto;align-items:center;justify-items:center;gap:clamp(5px,1dvh,11px);padding:clamp(8px,1.3dvh,18px) clamp(4px,3vw,24px);min-width:0}
+.ppdSplashInterior{position:relative;z-index:1;height:100%;max-height:900px;width:min(100%,660px);min-height:0;display:grid;grid-template-rows:minmax(0,.94fr) minmax(0,.78fr) auto auto;align-items:center;justify-items:center;gap:clamp(5px,1dvh,11px);padding:clamp(8px,1.3dvh,18px) clamp(4px,3vw,24px);min-width:0}
 .ppdSplashBrand{width:100%;min-width:0;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:clamp(3px,.7dvh,9px)}
 .ppdSplashLeaves{display:flex;align-items:center;gap:15px;color:#e4cb72;font-size:clamp(18px,3.7dvh,38px);height:1em}.ppdSplashLeaves span{font-size:.45em;color:#f8d579}
 .ppdSplashBrand h1{margin:0;line-height:1.06;font-size:clamp(19px,min(6.6vw,4dvh),53px);font-weight:780;letter-spacing:-.025em;color:#fff7e9;text-shadow:0 3px 6px #00201488;max-width:100%;overflow-wrap:normal;text-wrap:balance}
 .ppdSplashBrand h1 span{display:block}.ppdSplashBrand h1 .ppdSplashTitleSmall{display:none}.ppdSplashBrand h1 span.ppdSplashTitleLarge{font-size:.78em;white-space:nowrap;margin-bottom:.12em}
 .ppdSplashGoldRule{width:min(82%,400px);height:2px;display:flex;align-items:center;justify-content:center;background:linear-gradient(90deg,transparent,#ffe18d 20%,#e6a73b 43%,transparent 48%,transparent 52%,#e6a73b 57%,#ffe18d 80%,transparent);margin:clamp(2px,.65dvh,12px) auto;color:#ffe89b}
-.ppdSplashGoldRule span{font-size:16px;transform:translateY(-1px);background:transparent;padding:0 7px}
+.ppdSplashGoldRule span{font-size:16px;transform:translateY(-1px);background:#07563d;padding:0 7px}
 .ppdSplashSubtitle{display:flex;flex-direction:column;gap:clamp(1px,.6dvh,8px);line-height:1.15;font-size:clamp(13px,min(4.6vw,2.7dvh),31px)}.ppdSplashSubtitle strong{color:#d8f5dc;font-size:1.17em}.ppdSplashSubtitle .ppdSplashSubtitleMobile{display:none}.ppdSplashSubtitle span{color:#f8fdfa}
 .ppdSplashLogoSpace{position:relative;display:grid;place-items:center;align-self:stretch;justify-self:stretch;width:100%;height:100%;min-height:0;max-height:none;overflow:hidden}
 .ppdSplashRealLogo{position:relative;z-index:1;display:block;width:auto;height:auto;max-width:min(82%,270px);max-height:min(72%,27dvh);object-fit:contain;background:transparent;border:0;opacity:0;filter:none;transform:none;transition:opacity .2s ease;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;pointer-events:none}
@@ -78,9 +78,9 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 .ppdSplashProgress span{display:block;width:35%;height:100%;border-radius:inherit;background:linear-gradient(90deg,#07b85a,#37ee71,#e3ff8d);box-shadow:0 0 12px #83ee64;animation:ppdSplashTravel 2.1s ease-in-out infinite}
 @keyframes ppdSplashTravel{0%{transform:translateX(-110%)}50%{transform:translateX(150%)}100%{transform:translateX(315%)}}
 .ppdSplashLoading p{font-size:clamp(13px,3.7vw,21px);margin:0;color:#fafdf9}.ppdSplashLoading small{font-size:clamp(10px,2.5vw,14px);color:#b1d2be;letter-spacing:.17em;text-transform:uppercase}
-.ppdSplashCredits{width:100%;min-height:clamp(58px,8dvh,84px);padding:clamp(8px,1.25dvh,13px);display:grid;grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);align-items:center;gap:clamp(7px,2vw,25px);border:1px solid #286b50;border-radius:clamp(14px,3vw,24px);background:rgba(0,37,29,.92);box-shadow:0 12px 30px #002a2677}
+.ppdSplashCredits{width:100%;min-height:clamp(66px,9dvh,92px);padding:clamp(9px,1.5dvh,15px);display:grid;grid-template-columns:minmax(0,1fr) 1px minmax(0,1fr);align-items:center;gap:clamp(7px,2vw,25px);border:1px solid #286b50;border-radius:clamp(14px,3vw,24px);background:rgba(0,37,29,.92);box-shadow:0 12px 30px #002a2677}
 .ppdSplashCredit{min-width:0;display:flex;align-items:center;justify-content:center;gap:clamp(5px,1.7vw,14px);text-align:left}.ppdSplashCredit>div{min-width:0;display:flex;flex-direction:column;gap:3px}.ppdSplashCredit small{color:#b6d9c8;font-size:clamp(10px,2.6vw,15px)}.ppdSplashCredit b{color:#fff;font-size:clamp(12px,3.25vw,19px);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ppdSplashCreditIcon{font-size:clamp(18px,5vw,32px);color:#bdf4c1;flex:none}.ppdSplashComputerSvg{display:block;width:1em;height:1em;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round}.ppdSplashCreditDivider{height:70%;background:#87a996}
-@media(max-height:640px){.ppdSplashInterior{grid-template-rows:minmax(0,.82fr) minmax(0,.68fr) auto auto auto;gap:4px;padding:5px 12px}.ppdSplashLeaves{display:none}.ppdSplashGoldRule{margin:4px auto}.ppdSplashBrand{gap:3px}.ppdSplashCredits{min-height:50px;padding:6px}.ppdSplashRealLogo{max-width:min(78%,230px);max-height:23dvh}.ppdPwaVersionBadge{padding:4px 12px}}
+@media(max-height:640px){.ppdSplashInterior{grid-template-rows:minmax(0,.86fr) minmax(0,.7fr) auto auto;gap:5px;padding:6px 12px}.ppdSplashLeaves{display:none}.ppdSplashGoldRule{margin:4px auto}.ppdSplashBrand{gap:3px}.ppdSplashCredits{min-height:52px;padding:7px}.ppdSplashRealLogo{max-width:min(78%,230px);max-height:24dvh}}
 @media(max-width:700px){
   .ppdSplashBrand h1 .ppdSplashTitleLarge{display:none}
   .ppdSplashBrand h1 .ppdSplashTitleSmall{display:block}
@@ -89,10 +89,6 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
   .ppdSplashSubtitle .ppdSplashSubtitleMobile{display:block}
   .ppdSplashLogoSpace{max-height:none}
   .ppdSplashRealLogo{max-width:min(78%,230px);max-height:min(72%,25dvh)}
-  .ppdSplashCredits{gap:6px}
-  .ppdSplashCredit{gap:5px}
-  .ppdSplashCredit b{font-size:clamp(11px,3vw,16px)}
-  .ppdPwaVersionBadge{padding:5px 13px}
 }
 @media(prefers-reduced-motion:reduce){.ppdSplashNew{transition:none}.ppdSplashProgress span{animation:none;width:100%}.ppdSplashLogoWaiting{animation:none}}
 
@@ -102,10 +98,6 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 .update-banner{position:fixed;z-index:70;left:50%;transform:translateX(-50%);top:calc(12px + env(safe-area-inset-top,0px));width:min(94%,490px);background:#fff;color:#153a2e;border:1px solid #b9d7c9;box-shadow:0 8px 35px #0003;padding:12px;border-radius:12px;display:flex;flex-wrap:wrap;align-items:center;justify-content:center;gap:10px;font-size:13px}
 .update-banner button{border:1px solid #abcaba;border-radius:8px;background:#12513f;color:white;min-height:36px;padding:0 10px;font-weight:650}
 .update-banner button:last-child{background:#fff;color:#12513f}
-@media(max-width:600px){html,body{background:#112b3a!important}.app-shell{box-shadow:none;background:#fff}.frame-area{background:#112b3a}}
+@media(max-width:600px){.app-shell{box-shadow:none}}
 @media(prefers-reduced-motion:reduce){.startup-screen{transition:none}}
 
-/* The wrapper version is temporary: it exists only inside the startup splash and disappears with it. */
-.ppdPwaVersionBadge{justify-self:center;align-self:center;display:grid;justify-items:center;gap:2px;min-width:148px;max-width:100%;padding:6px 18px;border:1px solid rgba(116,213,153,.55);border-radius:12px;background:rgba(0,37,29,.72);color:#fff;text-align:center;line-height:1.2}
-.ppdPwaVersionBadge small{font-size:clamp(10px,2.5vw,13px);color:#c6e8d4}
-.ppdPwaVersionBadge b{font-size:clamp(14px,3.4vw,19px);font-weight:800;letter-spacing:.02em}
