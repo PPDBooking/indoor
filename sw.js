@@ -1,10 +1,10 @@
-/* Point Pedro Court GitHub Pages shell v1.0.0.15.
+/* Point Pedro Court GitHub Pages shell v1.0.0.16.
    GAS iframe / Google Sheets / authentication responses are NEVER cached here. */
 'use strict';
-const CACHE_NAME='ppd-wrapper-shell-v1.0.0.15';
+const CACHE_NAME='ppd-wrapper-shell-v1.0.0.16';
 const PREFIX='ppd-wrapper-shell-';
 const SCOPE_URL=new URL('./',self.registration.scope);
-const CORE_FILES=['./','./index.html','./styles.css?v=1.0.0.15','./app.js?v=1.0.0.15','./assets/ppd-badminton-splash.webp','./assets/ppd-badminton-desktop.webp?v=1.0.0.15'];
+const CORE_FILES=['./','./index.html','./styles.css?v=1.0.0.16','./app.js?v=1.0.0.16','./assets/ppd-badminton-splash.webp','./assets/ppd-badminton-desktop.webp?v=1.0.0.16'];
 const OPTIONAL_FILES=['./manifest.webmanifest','./push-config.json',
   './icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
 const isScopeURL=url=>url.origin===SCOPE_URL.origin&&url.pathname.startsWith(SCOPE_URL.pathname);

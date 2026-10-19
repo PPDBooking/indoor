@@ -13,19 +13,19 @@
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="preload" as="image" href="./assets/ppd-badminton-splash.webp" fetchpriority="high" media="(max-width: 700px)">
-  <link rel="preload" as="image" href="./assets/ppd-badminton-desktop.webp?v=1.0.0.15" fetchpriority="high" media="(min-width: 701px)">
+  <link rel="preload" as="image" href="./assets/ppd-badminton-desktop.webp?v=1.0.0.16" fetchpriority="high" media="(min-width: 701px)">
   <style>
     html,body{background-color:#00382e}
     #startup-screen{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;background-color:#00382e;background-image:none;color:#fff}
     #startup-screen[hidden]{display:none!important}
     #startup-screen .ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .22s ease;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-    @media (min-width:701px){#startup-screen .ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.15")}}
+    @media (min-width:701px){#startup-screen .ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.16")}}
     #startup-screen.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
     #startup-screen .ppdSplashInterior{position:relative;z-index:1}
   </style>
-  <link rel="stylesheet" href="./styles.css?v=1.0.0.15">
+  <link rel="stylesheet" href="./styles.css?v=1.0.0.16">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js?v=1.0.0.15" defer></script>
+  <script src="./app.js?v=1.0.0.16" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -56,8 +56,8 @@
     </div>
     <div class="ppdSplashLogoSpace"><img id="pwa-splash-logo" draggable="false" oncontextmenu="return false" class="ppdSplashRealLogo" onload="this.classList.add('ppdLogoReady')" alt="Official Point Pedro Divisional Secretariat Sports Association logo"><span class="ppdSplashLogoWaiting" aria-hidden="true"></span></div>
     <div class="ppdSplashLoading"><div class="ppdSplashProgress" role="progressbar" aria-label="Application loading"><span></span></div><p id="startup-screen-text">Preparing your application...</p><small>Please wait</small></div>
-    <div class="ppdSplashCredits"><div class="ppdSplashCredit"><span class="ppdSplashCreditIcon ppdSplashComputerIcon" aria-hidden="true"><svg class="ppdSplashComputerSvg" viewBox="0 0 24 24"><rect x="3" y="3.5" width="18" height="13" rx="1.5"></rect><path d="M8 20.5h8M12 16.5v4"></path></svg></span><div><small>App Developed by</small><b id="pwa-splash-developer">AA Computers</b></div></div><span class="ppdSplashCreditDivider"></span><div class="ppdSplashCredit"><span class="ppdSplashCreditIcon" aria-hidden="true">◆</span><div><small>Version</small><b id="pwa-splash-version">1.0.1.166</b></div></div></div>
-    <div id="pwa-wrapper-version" class="ppdPwaVersionBadge" aria-label="GitHub PWA version"><small>GitHub PWA Version</small><b>1.0.0.15</b></div>
+    <div class="ppdSplashCredits"><div class="ppdSplashCredit"><span class="ppdSplashCreditIcon ppdSplashComputerIcon" aria-hidden="true"><svg class="ppdSplashComputerSvg" viewBox="0 0 24 24"><rect x="3" y="3.5" width="18" height="13" rx="1.5"></rect><path d="M8 20.5h8M12 16.5v4"></path></svg></span><div><small>App Developed by</small><b id="pwa-splash-developer">AA Computers</b></div></div><span class="ppdSplashCreditDivider"></span><div class="ppdSplashCredit"><span class="ppdSplashCreditIcon" aria-hidden="true">◆</span><div><small>Version</small><b id="pwa-splash-version">1.0.1.167</b></div></div></div>
+    <div id="pwa-wrapper-version" class="ppdPwaVersionBadge" aria-label="GitHub PWA version"><small>GitHub PWA Version</small><b>1.0.0.16</b></div>
   </div>
   <p id="startup-status" class="ppdSplashStatus" aria-live="polite">Checking your saved session securely.</p>
   <div id="startup-actions" class="startup-actions" hidden><button id="startup-retry" class="secondary-button" type="button">Retry loading</button></div>
@@ -70,7 +70,7 @@
     var name=document.getElementById('pwa-splash-developer');
     var version=document.getElementById('pwa-splash-version');
     if(name&&typeof meta.developerName==='string')name.textContent=meta.developerName.trim().slice(0,100)||'AA Computers';
-    if(version&&typeof meta.appVersion==='string')version.textContent=meta.appVersion.trim().slice(0,40)||'1.0.1.166';
+    if(version&&typeof meta.appVersion==='string')version.textContent=meta.appVersion.trim().slice(0,40)||'1.0.1.167';
   }catch(_){}
 })();
 </script>

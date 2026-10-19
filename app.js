@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.15: splash first paint, temporary wrapper version, email-route forwarding and PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.16: splash first paint, temporary wrapper version, email-route forwarding and PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -18,6 +18,8 @@
   const hasApis = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window) && window.isSecureContext;
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
   let gasWindow = null, gasOrigin = '', currentUserId = '';
+  let pushConfigLoaded = false, registrationCheckInFlight = false, registrationCheckPendingUser = '', registrationPromptShownForUser = '';
+  let registrationDialogMode = false;
   const REMEMBER_STORAGE='ppd_pwa_remembered_session_v1';
   const savedSession=()=>{try{const v=JSON.parse(localStorage.getItem(REMEMBER_STORAGE)||'null');
     return v && typeof v.token==='string' && /^[A-Za-z0-9_.-]{16,1024}$/.test(v.token) && typeof v.userId==='string' &&
@@ -40,7 +42,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.15':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.16':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -56,7 +58,7 @@
     if(version)$('pwa-splash-version').textContent=version;
     if(persist&&(typeof data.developerName==='string'||version)){try{
       const previous=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'{}');
-      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.166').slice(0,40)}));
+      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.167').slice(0,40)}));
     }catch(_){}}
   }
   try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta)applySplashMetadata(savedSplashMeta,false);}catch(_){}
@@ -354,26 +356,64 @@
     if(!document.hidden && (!authReady||authRestoring))requestAuthResync();
   });
   async function existingSubscription(){const r=await ensureSW();return r&&r.pushManager?r.pushManager.getSubscription():null;}
-  function refreshUI(){
+  function setRegistrationDialogMode(enabled){
+    registrationDialogMode=!!enabled;
+    const title=$('notifications-title'),subtitle=dialog.querySelector('.dialog-heading p'),notice=dialog.querySelector('.notice-box p');
+    if(title)title.textContent=registrationDialogMode?'Complete device registration':'Mobile notifications';
+    if(subtitle)subtitle.textContent=registrationDialogMode?'Notifications are allowed — one final step':'Push settings for this device';
+    if(notice)notice.textContent=registrationDialogMode?'Notifications permission is already allowed. Continue to link this device to your signed-in booking account.':'Golden Bell stays in your booking app. This setting controls permission for phone notifications while the app is closed.';
+  }
+  function showRegistrationPrompt(userId,message){
+    const id=String(userId||'');
+    if(!authReady||!id||id!==currentUserId||!hasApis()||Notification.permission!=='granted'||(isIOS&&!standalone()))return;
+    if(registrationPromptShownForUser===id)return;
+    registrationPromptShownForUser=id;
+    setRegistrationDialogMode(true);
+    refreshUI(true);
+    setDetails(!vapidKey?'Notifications are allowed, but device registration is not configured. Please contact the administrator.':(message||'Notifications are already allowed. Select Continue & register this device to finish linking it to your account.'));
+    if(!dialog.open)dialog.showModal();
+  }
+  async function checkCurrentDeviceRegistrationAfterLogin(userId){
+    const id=String(userId||'');
+    if(!authReady||!id||id!==currentUserId||!hasApis()||Notification.permission!=='granted'||(isIOS&&!standalone()))return;
+    registrationCheckPendingUser=id;
+    if(!pushConfigLoaded||registrationCheckInFlight)return;
+    if(!gasWindow||!gasOrigin)return;
+    registrationCheckInFlight=true;
+    try{
+      const sub=await existingSubscription();
+      if(!authReady||currentUserId!==id)return;
+      postToGAS('PPD_PUSH_STATUS',{registrationCheck:true,registrationCheckUserId:id,subscription:sub&&typeof sub.toJSON==='function'?sub.toJSON():null});
+    }catch(e){
+      if(authReady&&currentUserId===id&&registrationCheckPendingUser===id){
+        registrationCheckPendingUser='';
+        deviceRegistered=false;pushReady=false;
+        showRegistrationPrompt(id,'We could not verify this device yet. Continue to retry registration after login.');
+      }
+    }finally{registrationCheckInFlight=false;}
+  }
+  function refreshUI(preserveDetails=false){
     const p=('Notification' in window)?Notification.permission:'unsupported';
     permissionLabel.textContent=!hasApis()?'Unavailable':p==='granted'?'Allowed':p==='denied'?'Blocked':'Not requested';
-    enable.disabled=!hasApis()||p==='denied';
-    enable.textContent=p==='granted'?'Register this device for background push':'Enable notifications';
+    enable.disabled=!hasApis()||p==='denied'||(p==='granted'&&!authReady)||(p==='granted'&&authReady&&!vapidKey);
+    enable.textContent=p==='granted'?(authReady?(deviceRegistered?'Refresh device registration':'Continue & register this device'):'Login to finish device registration'):'Enable notifications';
     testLocal.disabled=!hasApis()||p!=='granted';
     testReal.disabled=!(deviceRegistered&&pushReady&&authReady);
     delivery.textContent=deviceRegistered?(pushReady?'Device linked · sender enabled':'Device linked · sender not configured'):'Not connected';
     // Setup launcher disappears after the device has been registered; open ?notifications=1 to manage later.
     setup.hidden=deviceRegistered&&pushReady || new URLSearchParams(location.search).has('hidesetup');
     $('ios-install-tip').hidden=!isIOS||standalone();
-    if(!hasApis())setDetails('This browser cannot use Web Push. Use HTTPS on a supported browser.');
-    else if(isIOS&&!standalone())setDetails('On iPhone: add this app to the Home Screen before enabling Web Push.');
-    else if(p==='denied')setDetails('Notifications are blocked. Allow this site in device settings.');
-    else if(deviceRegistered&&pushReady)setDetails('This device is registered. Use REAL push test to check background delivery. GitHub Actions notifications may be delayed.');
-    else if(deviceRegistered)setDetails('Device linked, but server setup is still needed. Please configure Web Push Secrets and enable it in Apps Script.');
-    else if(p==='granted'&&!vapidKey)setDetails('Permission allowed. VAPID public key not configured. See GitHub README before registering.');
-    else if(p==='granted'&&!authReady)setDetails('Please log in to the booking app to link this device to your account.');
-    else if(p==='granted')setDetails('Permission is allowed. Select Register this device to connect push.');
-    else setDetails('Enable notifications on this device. Golden Bell remains unchanged.');
+    if(!preserveDetails){
+      if(!hasApis())setDetails('This browser cannot use Web Push. Use HTTPS on a supported browser.');
+      else if(isIOS&&!standalone())setDetails('On iPhone: add this app to the Home Screen before enabling Web Push.');
+      else if(p==='denied')setDetails('Notifications are blocked. Allow this site in device settings.');
+      else if(deviceRegistered&&pushReady)setDetails('This device is registered. Use REAL push test to check background delivery. GitHub Actions notifications may be delayed.');
+      else if(deviceRegistered)setDetails('Device linked, but server setup is still needed. Please configure Web Push Secrets and enable it in Apps Script.');
+      else if(p==='granted'&&!vapidKey)setDetails('Permission allowed. VAPID public key not configured. See GitHub README before registering.');
+      else if(p==='granted'&&!authReady)setDetails('Please log in to the booking app to link this device to your account.');
+      else if(p==='granted')setDetails('Permission is allowed. Select Continue & register this device to connect push.');
+      else setDetails('Enable notifications on this device. Golden Bell remains unchanged.');
+    }
   }
   async function registerDevice(force=false){
     if(!hasApis() || Notification.permission!=='granted')return;
@@ -433,10 +473,14 @@
       currentUserId=authReady?String(d.userId||''):'';
       if(authReady && (!wasAuthenticated || previousUser!==currentUserId)){
         bioUnlockGranted=!!(bioUnlockedForUser&&bioUnlockedForUser===currentUserId);
+        deviceRegistered=false;pushReady=false;registrationPromptShownForUser='';registrationCheckPendingUser='';
       }
-      if(!authReady){deviceRegistered=false;pushReady=false;}
+      if(!authReady){deviceRegistered=false;pushReady=false;registrationCheckPendingUser='';registrationPromptShownForUser='';}
       completeStartup();bioPresent();
-      if(authReady&&'Notification' in window&&Notification.permission==='granted')await registerDevice(true);
+      if(authReady&&(!wasAuthenticated||previousUser!==currentUserId)){
+        registrationPromptShownForUser='';
+        if('Notification' in window&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);
+      }
     }else if(d.type==='PPD_AUTH_RETRY'){
       authRestoring=false;
       // Show GAS's existing Retry secure session screen, retaining its token.
@@ -449,6 +493,7 @@
       // Expired GAS session requires password. Wait for GAS to finish loading the
       // public page before removing our startup shield; keep the opt-in preference.
       authReady=false;currentUserId='';bioUnlockedForUser='';bioUnlockGranted=true;
+      registrationCheckPendingUser='';registrationPromptShownForUser='';deviceRegistered=false;pushReady=false;
       clearSavedSession();
       displayStartup('Your saved session expired. Opening sign-in…');bioPresent();
     }else if(d.type==='PPD_BIO_FORGOTTEN'){
@@ -457,16 +502,32 @@
       else{bioForgetRequested=false;bioStatus('Unable to sign out. Try again after reconnecting.');}
     }else if(d.type==='PPD_REGISTER_RESULT'){
       deviceRegistered=!!d.ok;pushReady=!!d.ready;
-      if(!d.ok)setDetails('Device registration error: '+String(d.error||'Please sign in again.'));
+      if(d.ok){
+        registrationCheckPendingUser='';registrationPromptShownForUser=currentUserId;
+        setDetails('This device is now registered to your booking account.');
+        if(dialog.open)dialog.close();
+      }else{
+        setDetails('Device registration error: '+String(d.error||'Please sign in again.'));
+      }
     }else if(d.type==='PPD_TEST_RESULT'){
       setDetails(d.ok?'Real Push queued. It may take time for GitHub Actions to execute; lock screen delivery is not yet guaranteed.':'Real push test failed: '+String(d.error||'Unknown error'));
     }else if(d.type==='PPD_STATUS_RESULT'){
-      if(d.lastDelivery&&d.lastDelivery.status==='ACCEPTED')setDetails('Browser Push Service accepted last delivery at '+String(d.lastDelivery.at)+'. Device display is still subject to phone settings.');
+      if(d.registrationCheck===true&&authReady&&String(d.registrationCheckUserId||'')===currentUserId&&registrationCheckPendingUser===currentUserId){
+        registrationCheckPendingUser='';
+        deviceRegistered=!!d.currentDeviceRegistered;pushReady=!!d.serverReady;
+        if(deviceRegistered){
+          registrationPromptShownForUser=currentUserId;
+          setDetails(pushReady?'This device is already registered and ready for background push.':'This device is registered, but the push sender still needs configuration.');
+        }else{
+          showRegistrationPrompt(currentUserId,d.ok===false?'We could not verify this device yet. Continue to retry registration after login.':'Notifications are already allowed. Continue to link this device to your booking account.');
+        }
+      }else if(d.lastDelivery&&d.lastDelivery.status==='ACCEPTED')setDetails('Browser Push Service accepted last delivery at '+String(d.lastDelivery.at)+'. Device display is still subject to phone settings.');
     }
-    refreshUI();
+    refreshUI(d.type==='PPD_STATUS_RESULT'&&d.registrationCheck===true || d.type==='PPD_REGISTER_RESULT');
   });
-  setup.addEventListener('click',()=>{requestAuthResync();refreshUI();dialog.showModal();});
+  setup.addEventListener('click',()=>{setRegistrationDialogMode(false);requestAuthResync();refreshUI();dialog.showModal();});
   $('notification-close-button').addEventListener('click',()=>dialog.close());
+  dialog.addEventListener('close',()=>{setRegistrationDialogMode(false);refreshUI();});
   dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
   enable.addEventListener('click',()=>{requestAuthResync();requestPermissionAndRegister();});
   testLocal.addEventListener('click',async()=>{
@@ -493,9 +554,13 @@
   navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='PPD_PUSH_RECEIVED'&&authReady)postToGAS('PPD_PUSH_STATUS');});
   fetch('./push-config.json',{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(async config=>{
     vapidKey=String(config.vapidPublicKey||'').trim();if(!/^[A-Za-z0-9_-]{80,100}$/.test(vapidKey))vapidKey='';
+    pushConfigLoaded=true;
     try{await ensureSW();}catch(e){console.warn('Service worker failed:',e);}
     refreshUI();
-    if('Notification' in window&&Notification.permission==='granted'&&authReady)await registerDevice(true);
-  }).catch(e=>{refreshUI();console.warn('Push config load failed:',e);});
+    if(authReady&&'Notification' in window&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);
+  }).catch(e=>{
+    pushConfigLoaded=true;refreshUI();console.warn('Push config load failed:',e);
+    if(authReady&&'Notification' in window&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);
+  });
   refreshUI();
 })();
