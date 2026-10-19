@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.13: splash first paint, temporary wrapper version, email-route forwarding and PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.14: splash first paint, temporary wrapper version, email-route forwarding and PushManager. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -30,6 +30,20 @@
   const state = {lastError:''};
   const startup = $('startup-screen'), startupStatus = $('startup-status'), startupActions = $('startup-actions');
   const splashLogo=$('pwa-splash-logo');
+  const PWA_SPLASH_META_KEY='ppd_public_splash_meta_v1';
+  function applySplashMetadata(data, persist=true){
+    if(!data||typeof data!=='object')return;
+    const name=typeof data.developerName==='string'?data.developerName.trim().slice(0,100):'';
+    const version=typeof data.appVersion==='string'?data.appVersion.trim().slice(0,40):'';
+    const displayName=typeof data.developerName==='string'?(name||'AA Computers'):'';
+    if(displayName)$('pwa-splash-developer').textContent=displayName;
+    if(version)$('pwa-splash-version').textContent=version;
+    if(persist&&(typeof data.developerName==='string'||version)){try{
+      const previous=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'{}');
+      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.165').slice(0,40)}));
+    }catch(_){}}
+  }
+  try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta)applySplashMetadata(savedSplashMeta,false);}catch(_){}
   splashLogo.addEventListener('error',function(){this.removeAttribute('src');this.classList.remove('ppdLogoReady');});
   splashLogo.addEventListener('load',function(){if(this.naturalWidth>0)this.classList.add('ppdLogoReady');});
   if(splashLogo.complete&&splashLogo.naturalWidth>0)splashLogo.classList.add('ppdLogoReady');
@@ -371,7 +385,11 @@
     if(gasWindow && event.source!==gasWindow)return;
     if(!gasWindow){gasWindow=event.source;gasOrigin=event.origin;}
     const d=event.data;
-    if(d.type==='PPD_SESSION_REQUEST'){
+    if(d.type==='PPD_SPLASH_METADATA'){
+       applySplashMetadata(d,true);
+       postToGAS('PPD_SPLASH_METADATA_ACK');
+       return;
+    }else if(d.type==='PPD_SESSION_REQUEST'){
       const saved=savedSession();
       postToGAS('PPD_SESSION_RECOVER',{token:saved?saved.token:''});
     }else if(d.type==='PPD_SESSION_STORE'){
@@ -379,8 +397,7 @@
     }else if(d.type==='PPD_SESSION_CLEAR'){
       clearSavedSession();
     }else if(d.type==='PPD_AUTH_READY'){
-       if(d.developerName) $('pwa-splash-developer').textContent=String(d.developerName).slice(0,100);
-       if(d.appVersion) $('pwa-splash-version').textContent=String(d.appVersion).slice(0,40);
+       applySplashMetadata({developerName:d.developerName,appVersion:d.appVersion},true);
        if(typeof d.logoUrl==='string' && $('pwa-splash-logo')){
          const candidate=d.logoUrl.trim();
          if(/^https:\/\//i.test(candidate) || /^data:image\/(?:png|jpeg|webp);base64,/i.test(candidate)){

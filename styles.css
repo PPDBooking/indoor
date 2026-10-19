@@ -53,6 +53,7 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 
 /* Approved badminton artwork only: no gradient overlay or decorative artwork layer. */
 .ppdSplashNew{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:max(env(safe-area-inset-top,0px),8px) max(env(safe-area-inset-right,0px),8px) max(env(safe-area-inset-bottom,0px),8px) max(env(safe-area-inset-left,0px),8px);background-color:#00382e;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;transition:opacity .4s ease}
+@media(min-width:701px){.ppdSplashNew{background-image:url("./assets/ppd-badminton-desktop.webp");background-position:center center;background-size:cover}}
 .ppdSplashNew.splash-leaving,.ppdSplashNew.ppdSplashLeaving{opacity:0;pointer-events:none}
 
 .ppdSplashInterior{height:100%;max-height:900px;width:min(100%,660px);min-height:0;display:grid;grid-template-rows:minmax(0,.94fr) minmax(0,.78fr) auto auto auto;align-items:center;justify-items:center;gap:clamp(5px,1dvh,11px);padding:clamp(8px,1.3dvh,18px) clamp(4px,3vw,24px);min-width:0}
