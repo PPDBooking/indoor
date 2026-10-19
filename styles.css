@@ -29,18 +29,6 @@ dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 38px);overfl
   html.ppd-standalone .app-shell{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);
     background:linear-gradient(to bottom,#075b43 0%,#075b43 50%,#173244 50%,#173244 100%)}
 }
-/* Show the SAME unmodified splash artwork right through the root's native insets.
-   No separate safe-area band, gradient or second decorative layer. */
-@media(max-width:700px){
-  html:has(#startup-screen:not([hidden])),
-  html:has(#startup-screen:not([hidden])) body,
-  html:has(#startup-screen:not([hidden])) .app-shell{
-    background-color:transparent;background-image:url("./assets/ppd-badminton-splash.webp");
-    background-position:center center;background-size:cover;background-repeat:no-repeat;
-  }
-  html:has(#startup-screen:not([hidden])) .app-shell::before{display:none}
-}
-
 /* Biometric privacy gate: isolated PWA root component, no booking UI overrides. */
 .ppd-biometric-gate{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:20px;background:#eaf4ed;color:#164330}
 .ppd-biometric-card{width:min(100%,370px);padding:24px 20px;border-radius:18px;background:#fff;box-shadow:0 8px 45px #0002;display:grid;gap:14px;text-align:center}
@@ -69,7 +57,7 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 /* Approved badminton artwork only: no gradient overlay or decorative artwork layer. */
 .ppdSplashNew{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;background-color:transparent;background-image:none;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;transition:opacity .4s ease}
 .ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;transition:none;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.172");background-position:center center;background-size:cover}}
+@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.174");background-position:center center;background-size:cover}}
 .ppdSplashNew.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
 .ppdSplashNew.splash-leaving,.ppdSplashNew.ppdSplashLeaving{opacity:0;pointer-events:none}
 
