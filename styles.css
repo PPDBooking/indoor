@@ -52,11 +52,13 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 #booking-frame{touch-action:pan-y;overflow:hidden}
 
 /* Approved badminton artwork only: no gradient overlay or decorative artwork layer. */
-.ppdSplashNew{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:max(env(safe-area-inset-top,0px),8px) max(env(safe-area-inset-right,0px),8px) max(env(safe-area-inset-bottom,0px),8px) max(env(safe-area-inset-left,0px),8px);background-color:#00382e;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;transition:opacity .4s ease}
-@media(min-width:701px){.ppdSplashNew{background-image:url("./assets/ppd-badminton-desktop.webp");background-position:center center;background-size:cover}}
+.ppdSplashNew{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:max(env(safe-area-inset-top,0px),8px) max(env(safe-area-inset-right,0px),8px) max(env(safe-area-inset-bottom,0px),8px) max(env(safe-area-inset-left,0px),8px);background-color:#00382e;background-image:none;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;transition:opacity .4s ease}
+.ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:0;transition:opacity .22s ease;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
+@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.15");background-position:center center;background-size:cover}}
+.ppdSplashNew.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
 .ppdSplashNew.splash-leaving,.ppdSplashNew.ppdSplashLeaving{opacity:0;pointer-events:none}
 
-.ppdSplashInterior{height:100%;max-height:900px;width:min(100%,660px);min-height:0;display:grid;grid-template-rows:minmax(0,.94fr) minmax(0,.78fr) auto auto auto;align-items:center;justify-items:center;gap:clamp(5px,1dvh,11px);padding:clamp(8px,1.3dvh,18px) clamp(4px,3vw,24px);min-width:0}
+.ppdSplashInterior{position:relative;z-index:1;height:100%;max-height:900px;width:min(100%,660px);min-height:0;display:grid;grid-template-rows:minmax(0,.94fr) minmax(0,.78fr) auto auto auto;align-items:center;justify-items:center;gap:clamp(5px,1dvh,11px);padding:clamp(8px,1.3dvh,18px) clamp(4px,3vw,24px);min-width:0}
 .ppdSplashBrand{width:100%;min-width:0;text-align:center;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:clamp(3px,.7dvh,9px)}
 .ppdSplashLeaves{display:flex;align-items:center;gap:15px;color:#e4cb72;font-size:clamp(18px,3.7dvh,38px);height:1em}.ppdSplashLeaves span{font-size:.45em;color:#f8d579}
 .ppdSplashBrand h1{margin:0;line-height:1.06;font-size:clamp(19px,min(6.6vw,4dvh),53px);font-weight:780;letter-spacing:-.025em;color:#fff7e9;text-shadow:0 3px 6px #00201488;max-width:100%;overflow-wrap:normal;text-wrap:balance}

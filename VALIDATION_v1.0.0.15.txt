@@ -1,0 +1,12 @@
+Point Pedro Indoor Court — GitHub PWA v1.0.0.15 source validation
+
+Validated:
+- PWA version and Service Worker cache name are 1.0.0.15.
+- Apps Script splash version fallback is 1.0.1.166.
+- The approved uploaded desktop image was copied byte-for-byte to assets/ppd-badminton-desktop.webp (1672 x 941, WebP).
+- Desktop image preload, CSS layer, JS preloader and Service Worker core cache all use the v1.0.0.15 desktop asset URL.
+- Splash background remains solid emerald until image load/decode completes, then fades in as a full-viewport layer.
+- Node syntax checks passed for app.js, sw.js, and PWA inline script.
+- tinycss2 CSS parsing passed for styles.css; HTML structural parse found splash section and background layer.
+
+Not performed: live GitHub Pages deployment, offline device test, or visual browser screenshot. Those must be checked after deployment.
