@@ -24,9 +24,21 @@ dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 38px);overfl
 @media(max-width:420px){.brand-copy strong{font-size:11px;max-width:39vw}.brand-copy small{font-size:9px}.utility-bar{gap:4px}.bar-actions{gap:4px}.action-button,.external-button{min-height:32px}.notification-action{padding:0 7px}}
 @media (display-mode:standalone){.app-shell{box-shadow:none}}
 @media (max-width:900px){
-  /* iOS standalone detected by navigator.standalone or display-mode. */
-  html.ppd-standalone,html.ppd-standalone body{background:#112b3a}
-  html.ppd-standalone .app-shell{padding-top:env(safe-area-inset-top,0px);padding-bottom:0;background:#112b3a;background-image:none}
+  /* The physical status inset belongs to the normal green header, not a blue strip. */
+  html.ppd-standalone,html.ppd-standalone body{background:#f4f6f8}
+  html.ppd-standalone .app-shell{position:relative;padding-top:env(safe-area-inset-top,0px);padding-bottom:0;background:#f4f6f8}
+  html.ppd-standalone .app-shell::before{content:"";position:absolute;left:0;right:0;top:0;height:env(safe-area-inset-top,0px);background:#075b43;pointer-events:none}
+}
+/* Show the SAME unmodified splash artwork right through the root's native insets.
+   No separate safe-area band, gradient or second decorative layer. */
+@media(max-width:700px){
+  html:has(#startup-screen:not([hidden])),
+  html:has(#startup-screen:not([hidden])) body,
+  html:has(#startup-screen:not([hidden])) .app-shell{
+    background-color:transparent;background-image:url("./assets/ppd-badminton-splash.webp");
+    background-position:center center;background-size:cover;background-repeat:no-repeat;
+  }
+  html:has(#startup-screen:not([hidden])) .app-shell::before{display:none}
 }
 
 /* Biometric privacy gate: isolated PWA root component, no booking UI overrides. */
@@ -49,11 +61,15 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 .app-shell{height:100vh;height:100dvh;min-height:0;overflow:hidden;overscroll-behavior:none}
 .frame-area{min-height:0;isolation:isolate}
 #booking-frame{touch-action:pan-y;overflow:hidden}
+@media(max-width:900px){
+  .frame-area{align-self:stretch;flex:1 1 0;min-height:0}
+  #booking-frame{position:absolute;inset:0;width:100%;height:100%;min-height:0}
+}
 
 /* Approved badminton artwork only: no gradient overlay or decorative artwork layer. */
 .ppdSplashNew{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;background-color:transparent;background-image:none;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;transition:opacity .4s ease}
 .ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;transition:none;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.20");background-position:center center;background-size:cover}}
+@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.172");background-position:center center;background-size:cover}}
 .ppdSplashNew.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
 .ppdSplashNew.splash-leaving,.ppdSplashNew.ppdSplashLeaving{opacity:0;pointer-events:none}
 
