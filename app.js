@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.183: shared mobile glass dock and safe-area control. */
+/* GitHub Pages PWA wrapper v1.0.0.184: shared mobile glass dock and safe-area control. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -16,13 +16,25 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   document.documentElement.classList.toggle('ppd-standalone',standalone());
   document.documentElement.classList.toggle('ppd-ios',isIOS);
-  /* v1.0.0.183: debug panel (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
+  /* v1.0.0.184: full-height fix for iOS standalone. Uses screen.height only, never innerHeight, so it cannot oscillate. */
+  function applyFullHeight(){
+    const root=document.documentElement;
+    try{
+      const portrait=window.innerHeight>window.innerWidth;
+      const full=screen.height||0;
+      if(isIOS&&standalone()&&portrait&&full>=500&&full<=1400)root.style.setProperty('--ppd-full',full+'px');
+      else root.style.removeProperty('--ppd-full');
+    }catch(_){root.style.removeProperty('--ppd-full');}
+  }
+  applyFullHeight();
+  ['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(applyFullHeight,80)));
+  /* v1.0.0.184: debug panel is now off by default (set DEBUG_STANDALONE_SECONDS above 0 to bring it back) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
   (function(){
-    const DEBUG_STANDALONE_SECONDS=120;
+    const DEBUG_STANDALONE_SECONDS=0;
     const forced=/[?&]ppddebug=1/.test(location.search);
     if(!(forced||(DEBUG_STANDALONE_SECONDS>0&&standalone())))return;
     const root=document.documentElement;
-    const setFull=()=>{const f=screen.height||0;if(f>innerHeight&&f-innerHeight<=120)root.style.setProperty('--ppd-full',f+'px');else root.style.removeProperty('--ppd-full');};
+    const setFull=applyFullHeight;
     const wrap=document.createElement('div');
     wrap.style.cssText='position:fixed;z-index:2147483647;left:6px;top:70px;font:11px/1.35 monospace;color:#7dffb0;background:#000c;border-radius:8px;padding:6px 8px;max-width:78vw';
     const pre=document.createElement('pre');pre.style.cssText='margin:0 0 6px;white-space:pre;pointer-events:none';
@@ -97,7 +109,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.183':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.184':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -113,7 +125,7 @@
     if(version)$('pwa-splash-version').textContent=version;
     if(persist&&(typeof data.developerName==='string'||version)){try{
       const previous=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'{}');
-      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.183').slice(0,40)}));
+      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.184').slice(0,40)}));
     }catch(_){}}
   }
   try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta&&typeof savedSplashMeta.developerName==='string')applySplashMetadata({developerName:savedSplashMeta.developerName},false);}catch(_){}
