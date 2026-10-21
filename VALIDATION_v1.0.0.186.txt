@@ -1,0 +1,11 @@
+GitHub Pages PWA v1.0.0.186 — static validation
+Date: 2026-10-22
+
+PASS: app.js syntax check.
+PASS: PPD_OPEN_NOTIFICATIONS bridge handler present.
+PASS: PPD_PWA_INFO status message present.
+PASS: Service Worker cache name and versioned asset references updated.
+PASS: No stale 1.0.0.185 references remain in the PWA source files.
+
+NOT LIVE-TESTED:
+- GitHub Pages deployment, real Web Push, device registration or browser-specific PWA installation.

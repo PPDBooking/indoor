@@ -1,9 +1,13 @@
-/* GitHub Pages PWA wrapper v1.0.0.184: shared mobile glass dock and safe-area control. */
+/* GitHub Pages PWA wrapper v1.0.0.186: shared mobile glass dock and safe-area control. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
+  const PWA_VERSION='1.0.0.186';
+  const PWA_BUILD_NUMBER='186';
+  const PWA_RELEASE_DATE='2026-10-22';
+  const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
   const enable = $('enable-notifications-button');
   const testLocal = $('test-notification-button');
@@ -16,7 +20,7 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   document.documentElement.classList.toggle('ppd-standalone',standalone());
   document.documentElement.classList.toggle('ppd-ios',isIOS);
-  /* v1.0.0.184: full-height fix for iOS standalone. Uses screen.height only, never innerHeight, so it cannot oscillate. */
+  /* v1.0.0.186: full-height fix for iOS standalone. Uses screen.height only, never innerHeight, so it cannot oscillate. */
   function applyFullHeight(){
     const root=document.documentElement;
     try{
@@ -28,7 +32,7 @@
   }
   applyFullHeight();
   ['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(applyFullHeight,80)));
-  /* v1.0.0.184: debug panel is now off by default (set DEBUG_STANDALONE_SECONDS above 0 to bring it back) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
+  /* v1.0.0.186: debug panel is now off by default (set DEBUG_STANDALONE_SECONDS above 0 to bring it back) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
   (function(){
     const DEBUG_STANDALONE_SECONDS=0;
     const forced=/[?&]ppddebug=1/.test(location.search);
@@ -109,7 +113,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.184':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.186':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -125,7 +129,7 @@
     if(version)$('pwa-splash-version').textContent=version;
     if(persist&&(typeof data.developerName==='string'||version)){try{
       const previous=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'{}');
-      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.184').slice(0,40)}));
+      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.188').slice(0,40)}));
     }catch(_){}}
   }
   try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta&&typeof savedSplashMeta.developerName==='string')applySplashMetadata({developerName:savedSplashMeta.developerName},false);}catch(_){}
@@ -196,9 +200,14 @@
     if(!worker||!navigator.serviceWorker?.controller)return;
     pendingWorker=worker;updateBanner.hidden=false;
     updateNow.disabled=false;updateNow.textContent='Update now';
+    sendPwaInfo();
   }
   navigator.serviceWorker?.addEventListener('controllerchange',()=>{
-    if(workerReloading)location.reload();
+    if(workerReloading){
+      try{localStorage.setItem(PWA_LAST_UPDATE_KEY,new Date().toISOString());}catch(_){}
+      sendPwaInfo();
+      location.reload();
+    }
   });
 
   /* Optional per-device WebAuthn privacy lock. This masks the entire PWA shell.
@@ -412,6 +421,18 @@
     // Only browser Push subscription metadata and navigation intents cross this bridge.
     gasWindow.postMessage({source:'PPD_PWA',type,safeBottom:safeBottom(),...extra},gasOrigin);
   }
+  function pwaInfoPayload(){
+    let lastSuccessfulUpdate='';
+    try{lastSuccessfulUpdate=localStorage.getItem(PWA_LAST_UPDATE_KEY)||'';}catch(_){}
+    const registration=sw;
+    const serviceWorkerStatus=(!('serviceWorker' in navigator))?'Unsupported':
+      !registration?'Checking':registration.waiting?'Waiting to activate':registration.installing?'Installing':
+      registration.active?'Active':'Registered';
+    return {version:PWA_VERSION,buildNumber:PWA_BUILD_NUMBER,releaseDate:PWA_RELEASE_DATE,
+      serviceWorkerStatus,installationStatus:standalone()?'Installed PWA (standalone)':'Browser mode',
+      lastSuccessfulUpdate,updateAvailable:!!pendingWorker,online:!!navigator.onLine};
+  }
+  function sendPwaInfo(){postToGAS('PPD_PWA_INFO',pwaInfoPayload());}
   function requestAuthResync(){
     // The script.google.com outer iframe can contain a nested googleusercontent frame.
     // Both receive a query; only the trusted GAS UI is allowed to answer.
@@ -499,6 +520,7 @@
       else if(p==='granted')setDetails('Permission is allowed. Select Continue & register this device to connect push.');
       else setDetails('Enable notifications on this device. Golden Bell remains unchanged.');
     }
+    sendPwaInfo();
   }
   async function registerDevice(force=false){
     if(!hasApis() || Notification.permission!=='granted')return;
@@ -545,6 +567,12 @@
         if(!currentUserId||currentUserId===userId)applyDisplayPreference(preference);
       }
       return;
+    }else if(d.type==='PPD_OPEN_NOTIFICATIONS'){
+       setRegistrationDialogMode(false);
+       requestAuthResync();
+       refreshUI();
+       if(!dialog.open)dialog.showModal();
+       return;
     }else if(d.type==='PPD_AUTH_READY'){
        applySplashMetadata({developerName:d.developerName,appVersion:d.appVersion},true);
        if(typeof d.logoUrl==='string' && $('pwa-splash-logo')){
@@ -571,7 +599,7 @@
         deviceRegistered=false;pushReady=false;registrationPromptShownForUser='';registrationCheckPendingUser='';
       }
       if(!authReady){deviceRegistered=false;pushReady=false;registrationCheckPendingUser='';registrationPromptShownForUser='';}
-      completeStartup();bioPresent();
+      completeStartup();bioPresent();sendPwaInfo();
       if(authReady&&(!wasAuthenticated||previousUser!==currentUserId)){
         registrationPromptShownForUser='';
         if('Notification' in window&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);
@@ -637,8 +665,8 @@
     else if(isIOS){$('ios-install-tip').hidden=false;}
   });
   window.addEventListener('appinstalled',()=>{install.hidden=true;deferredInstall=null;});
-  window.addEventListener('online',()=>{$('offline-note').hidden=true;});
-  window.addEventListener('offline',()=>{$('offline-note').hidden=false;});
+  window.addEventListener('online',()=>{$('offline-note').hidden=true;sendPwaInfo();});
+  window.addEventListener('offline',()=>{$('offline-note').hidden=false;sendPwaInfo();});
   $('offline-note').hidden=navigator.onLine;
   if(new URLSearchParams(location.search).get('notifications')==='1'){
     setTimeout(()=>{refreshUI();dialog.showModal();},350);
@@ -651,10 +679,10 @@
     vapidKey=String(config.vapidPublicKey||'').trim();if(!/^[A-Za-z0-9_-]{80,100}$/.test(vapidKey))vapidKey='';
     pushConfigLoaded=true;
     try{await ensureSW();}catch(e){console.warn('Service worker failed:',e);}
-    refreshUI();
+    refreshUI();sendPwaInfo();
     if(authReady&&'Notification' in window&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);
   }).catch(e=>{
-    pushConfigLoaded=true;refreshUI();console.warn('Push config load failed:',e);
+    pushConfigLoaded=true;refreshUI();sendPwaInfo();console.warn('Push config load failed:',e);
     if(authReady&&'Notification' in window&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);
   });
   refreshUI();
