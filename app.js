@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.177: iPhone full-bleed viewport and existing wrapper features. */
+/* GitHub Pages PWA wrapper v1.0.0.178: shared mobile glass dock and safe-area control. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -19,12 +19,9 @@
   const hasApis = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window) && window.isSecureContext;
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
   let gasWindow = null, gasOrigin = '', currentUserId = '';
-  const DISPLAY_PREFERENCE_PREFIX='ppd_mobile_display_settings_v1:';
-  const DEFAULT_DISPLAY_PREFERENCE={layout:'auto',fullScreenBackground:true};
-  const normalizeDisplayPreference=value=>({
-    layout:value&&value.layout==='iphone'?'iphone':'auto',
-    fullScreenBackground:!value||value.fullScreenBackground!==false
-  });
+  const DISPLAY_PREFERENCE_PREFIX='ppd_mobile_display_settings_v2:';
+  const DEFAULT_DISPLAY_PREFERENCE={safeArea:false};
+  const normalizeDisplayPreference=value=>({safeArea:!!(value&&value.safeArea===true)});
   function displayPreferenceKey(userId){return DISPLAY_PREFERENCE_PREFIX+String(userId||'');}
   function readDisplayPreference(userId){
     if(!userId)return null;
@@ -36,9 +33,7 @@
   }
   function applyDisplayPreference(value){
     const preference=normalizeDisplayPreference(value);
-    document.documentElement.dataset.ppdLayout=preference.layout;
-    document.documentElement.classList.toggle('ppd-edge-to-edge',preference.fullScreenBackground);
-    document.documentElement.classList.toggle('ppd-iphone-layout',preference.layout==='iphone'||(preference.layout==='auto'&&isIOS));
+    document.documentElement.classList.toggle('ppd-safe-area-on',preference.safeArea);
     return preference;
   }
   function restoreDisplayPreferenceForUser(userId,gasPreference){
@@ -74,7 +69,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.177':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.178':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -90,11 +85,11 @@
     if(version)$('pwa-splash-version').textContent=version;
     if(persist&&(typeof data.developerName==='string'||version)){try{
       const previous=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'{}');
-      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.176').slice(0,40)}));
+      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.178').slice(0,40)}));
     }catch(_){}}
   }
   try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta&&typeof savedSplashMeta.developerName==='string')applySplashMetadata({developerName:savedSplashMeta.developerName},false);}catch(_){}
-  let splashLogoFallbackTimer=setTimeout(showSplashLogoFallback,4500);
+  let splashLogoFallbackTimer=setTimeout(showSplashLogoFallback,2000);
   function showSplashLogoFallback(){
     if(splashLogo&&!splashLogo.classList.contains('ppdLogoReady')&&splashLogo.parentElement)
       splashLogo.parentElement.classList.add('ppdLogoFailed');
