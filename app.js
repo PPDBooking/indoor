@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.182: shared mobile glass dock and safe-area control. */
+/* GitHub Pages PWA wrapper v1.0.0.183: shared mobile glass dock and safe-area control. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -16,21 +16,33 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   document.documentElement.classList.toggle('ppd-standalone',standalone());
   document.documentElement.classList.toggle('ppd-ios',isIOS);
-  /* v1.0.0.182: opt-in diagnostics. Open the app URL with ?ppddebug=1 to show viewport numbers on screen. */
+  /* v1.0.0.183: debug panel (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
   (function(){
-    const DEBUG_STANDALONE_SECONDS=20;
-    const wantDebug=/[?&]ppddebug=1/.test(location.search)||(DEBUG_STANDALONE_SECONDS>0&&standalone());
-    if(!wantDebug)return;
-    const box=document.createElement('pre');
-    box.style.cssText='position:fixed;z-index:2147483647;left:6px;top:80px;margin:0;padding:6px 8px;border-radius:8px;background:#000c;color:#7dffb0;font:11px/1.35 monospace;pointer-events:none;white-space:pre';
-    document.documentElement.appendChild(box);
+    const DEBUG_STANDALONE_SECONDS=120;
+    const forced=/[?&]ppddebug=1/.test(location.search);
+    if(!(forced||(DEBUG_STANDALONE_SECONDS>0&&standalone())))return;
+    const root=document.documentElement;
+    const setFull=()=>{const f=screen.height||0;if(f>innerHeight&&f-innerHeight<=120)root.style.setProperty('--ppd-full',f+'px');else root.style.removeProperty('--ppd-full');};
+    const wrap=document.createElement('div');
+    wrap.style.cssText='position:fixed;z-index:2147483647;left:6px;top:70px;font:11px/1.35 monospace;color:#7dffb0;background:#000c;border-radius:8px;padding:6px 8px;max-width:78vw';
+    const pre=document.createElement('pre');pre.style.cssText='margin:0 0 6px;white-space:pre;pointer-events:none';
+    const row=document.createElement('div');row.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
+    wrap.appendChild(pre);wrap.appendChild(row);root.appendChild(wrap);
     const probe=document.createElement('div');
     probe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
-    document.documentElement.appendChild(probe);
-    const show=()=>{const cs=getComputedStyle(probe),vv=window.visualViewport;
-      box.textContent=['screen '+screen.width+'x'+screen.height,'inner '+innerWidth+'x'+innerHeight,'outer '+outerWidth+'x'+outerHeight,'visual '+(vv?Math.round(vv.width)+'x'+Math.round(vv.height):'n/a'),'docEl '+document.documentElement.clientHeight,'inset top '+cs.paddingTop+' bottom '+cs.paddingBottom,'standalone '+standalone()+' ios '+isIOS,'navigator.standalone '+navigator.standalone].join('\n');};
-    show();['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(show,80)));const timer=setInterval(show,1500);
-    if(!/[?&]ppddebug=1/.test(location.search))setTimeout(()=>{clearInterval(timer);box.remove();probe.remove();},DEBUG_STANDALONE_SECONDS*1000);
+    root.appendChild(probe);
+    let current='off';
+    const show=()=>{setFull();const cs=getComputedStyle(probe),vv=window.visualViewport;
+      pre.textContent=['variant '+current,'screen '+screen.width+'x'+screen.height,'inner '+innerWidth+'x'+innerHeight,'visual '+(vv?Math.round(vv.width)+'x'+Math.round(vv.height):'n/a'),'docEl '+root.clientHeight,'inset top '+cs.paddingTop+' bottom '+cs.paddingBottom,'standalone '+standalone()].join('\n');};
+    ['off','x1','x2','x3','x4'].forEach(v=>{
+      const b=document.createElement('button');b.type='button';b.textContent=v==='off'?'Off':v.toUpperCase();
+      b.style.cssText='min-width:44px;min-height:34px;border-radius:7px;border:1px solid #7dffb0;background:#06301f;color:#fff;font:12px monospace';
+      b.addEventListener('click',()=>{['x1','x2','x3','x4'].forEach(k=>root.classList.remove('ppd-'+k));if(v!=='off')root.classList.add('ppd-'+v);current=v;show();});
+      row.appendChild(b);
+    });
+    show();['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(show,80)));
+    const timer=setInterval(show,1500);
+    if(!forced)setTimeout(()=>{clearInterval(timer);wrap.remove();probe.remove();},DEBUG_STANDALONE_SECONDS*1000);
   })();
   const hasApis = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window) && window.isSecureContext;
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
@@ -85,7 +97,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.182':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.183':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -101,7 +113,7 @@
     if(version)$('pwa-splash-version').textContent=version;
     if(persist&&(typeof data.developerName==='string'||version)){try{
       const previous=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'{}');
-      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.182').slice(0,40)}));
+      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.183').slice(0,40)}));
     }catch(_){}}
   }
   try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta&&typeof savedSplashMeta.developerName==='string')applySplashMetadata({developerName:savedSplashMeta.developerName},false);}catch(_){}
