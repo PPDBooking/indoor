@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.175: splash first paint, temporary wrapper version, email-route forwarding and PushManager. */
+/* GitHub Pages PWA wrapper v1.0.0.176: iPhone full-bleed viewport and existing wrapper features. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -42,7 +42,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.175':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.176':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();

@@ -13,13 +13,13 @@
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="preload" as="image" href="./assets/ppd-badminton-splash.webp" fetchpriority="high" media="(max-width: 700px)">
-  <link rel="preload" as="image" href="./assets/ppd-badminton-desktop.webp?v=1.0.0.175" fetchpriority="high" media="(min-width: 701px)">
+  <link rel="preload" as="image" href="./assets/ppd-badminton-desktop.webp?v=1.0.0.176" fetchpriority="high" media="(min-width: 701px)">
   <style>
     /* The original image is the sole splash backdrop, including the mobile root edges. */
     #startup-screen{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;background-color:transparent;background-image:none;color:#fff}
     #startup-screen[hidden]{display:none!important}
     #startup-screen .ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;transition:none;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-    @media (min-width:701px){#startup-screen .ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.175")}}
+    @media (min-width:701px){#startup-screen .ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.176")}}
     #startup-screen.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
     #startup-screen .ppdSplashInterior{position:relative;z-index:1}
     /* Keep the splash artwork and credits within one full-screen overlay, with
@@ -41,11 +41,19 @@
          artwork and credits inside that same box so iOS cannot leave a safe-area strip. */
       #startup-screen{inset:0;width:100%;height:auto;}
       #startup-screen .ppdSplashInterior{height:100%;flex:none;}
+      /* In an installed iPhone PWA, extend the splash backdrop through the
+         home-indicator inset while keeping the credits in the visible viewport. */
+      @supports (-webkit-touch-callout: none) {
+        @media (display-mode: standalone) {
+          #startup-screen{bottom:calc(0px - env(safe-area-inset-bottom,0px));}
+          #startup-screen .ppdSplashInterior{position:absolute;inset:0 0 auto;height:100dvh;max-height:none;width:min(100%,660px);margin:0 auto;flex:none;}
+        }
+      }
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=1.0.0.175">
+  <link rel="stylesheet" href="./styles.css?v=1.0.0.176">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js?v=1.0.0.175" defer></script>
+  <script src="./app.js?v=1.0.0.176" defer></script>
 </head>
 <body>
   <div class="app-shell">
