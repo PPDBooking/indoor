@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#075b43">
+  <meta name="theme-color" content="#f2f4f6">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PPD Court">
@@ -13,18 +13,17 @@
   <link rel="icon" type="image/png" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
   <link rel="preload" as="image" href="./assets/ppd-badminton-splash.webp" fetchpriority="high" media="(max-width: 700px)">
-  <link rel="preload" as="image" href="./assets/ppd-badminton-desktop.webp?v=1.0.0.174" fetchpriority="high" media="(min-width: 701px)">
+  <link rel="preload" as="image" href="./assets/ppd-badminton-desktop.webp?v=1.0.0.175" fetchpriority="high" media="(min-width: 701px)">
   <style>
     /* The original image is the sole splash backdrop, including the mobile root edges. */
     #startup-screen{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;background-color:transparent;background-image:none;color:#fff}
     #startup-screen[hidden]{display:none!important}
     #startup-screen .ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;transition:none;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-    @media (min-width:701px){#startup-screen .ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.174")}}
+    @media (min-width:701px){#startup-screen .ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.175")}}
     #startup-screen.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
     #startup-screen .ppdSplashInterior{position:relative;z-index:1}
-    /* First paint: the same badminton art reaches the native display edges.
-       Only the background extends into the iPhone bottom inset; the text grid
-       remains fixed to the visible viewport so it does not jump while loading. */
+    /* Keep the splash artwork and credits within one full-screen overlay, with
+       no extra safe-area backdrop left beneath the image. */
     @media (max-width:700px){
       html:has(#startup-screen:not([hidden])),
       html:has(#startup-screen:not([hidden])) body{
@@ -38,13 +37,15 @@
         padding-top:0;padding-bottom:0;
         background:#075b43 url("./assets/ppd-badminton-splash.webp") center center / cover no-repeat;
       }
-      #startup-screen{bottom:auto;height:100dvh;height:calc(100lvh + env(safe-area-inset-bottom,0px));width:100%;}
-      #startup-screen .ppdSplashInterior{height:100dvh;flex:none;}
+      /* The fixed overlay already spans the full available viewport. Keep its
+         artwork and credits inside that same box so iOS cannot leave a safe-area strip. */
+      #startup-screen{inset:0;width:100%;height:auto;}
+      #startup-screen .ppdSplashInterior{height:100%;flex:none;}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=1.0.0.174">
+  <link rel="stylesheet" href="./styles.css?v=1.0.0.175">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js?v=1.0.0.174" defer></script>
+  <script src="./app.js?v=1.0.0.175" defer></script>
 </head>
 <body>
   <div class="app-shell">
