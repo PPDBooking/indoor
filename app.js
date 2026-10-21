@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.178: shared mobile glass dock and safe-area control. */
+/* GitHub Pages PWA wrapper v1.0.0.179: full-bleed mobile splash safe-area fix. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -69,7 +69,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.178':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.179':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -85,7 +85,7 @@
     if(version)$('pwa-splash-version').textContent=version;
     if(persist&&(typeof data.developerName==='string'||version)){try{
       const previous=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'{}');
-      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.178').slice(0,40)}));
+      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.179').slice(0,40)}));
     }catch(_){}}
   }
   try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta&&typeof savedSplashMeta.developerName==='string')applySplashMetadata({developerName:savedSplashMeta.developerName},false);}catch(_){}
@@ -125,6 +125,7 @@
   let startupTimer=null;
   const displayStartup = (message,allowRetry=false) => {
     startupResolved=false; startup.hidden=false; startup.classList.remove('splash-leaving');
+    document.documentElement.classList.add('ppd-starting');
     startupStatus.textContent=message;const splashLabel=$('startup-screen-text');if(splashLabel)splashLabel.textContent=allowRetry?'Connection needs attention':(message==='Checking your saved session securely.'?'Preparing your application...':message);startupActions.hidden=!allowRetry;
     if(!allowRetry && !startupTimer){
       startupTimer=setTimeout(()=>{
@@ -134,7 +135,7 @@
     }
   };
   const completeStartup = () => {
-    startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');setTimeout(()=>{if(startupResolved)startup.hidden=true;},400);
+    startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');setTimeout(()=>{if(startupResolved){startup.hidden=true;document.documentElement.classList.remove('ppd-starting');}},400);
     if(startupTimer){clearTimeout(startupTimer);startupTimer=null;}
   };
   try{const lastBrand=localStorage.getItem('ppd_public_brand_logo');if(lastBrand && /^https:\/\//i.test(lastBrand))$('pwa-splash-logo').src=lastBrand;}catch(_){}
