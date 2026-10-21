@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.176: iPhone full-bleed viewport and existing wrapper features. */
+/* GitHub Pages PWA wrapper v1.0.0.177: iPhone full-bleed viewport and existing wrapper features. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -15,9 +15,41 @@
   const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   document.documentElement.classList.toggle('ppd-standalone',standalone());
+  document.documentElement.classList.toggle('ppd-ios',isIOS);
   const hasApis = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window) && window.isSecureContext;
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
   let gasWindow = null, gasOrigin = '', currentUserId = '';
+  const DISPLAY_PREFERENCE_PREFIX='ppd_mobile_display_settings_v1:';
+  const DEFAULT_DISPLAY_PREFERENCE={layout:'auto',fullScreenBackground:true};
+  const normalizeDisplayPreference=value=>({
+    layout:value&&value.layout==='iphone'?'iphone':'auto',
+    fullScreenBackground:!value||value.fullScreenBackground!==false
+  });
+  function displayPreferenceKey(userId){return DISPLAY_PREFERENCE_PREFIX+String(userId||'');}
+  function readDisplayPreference(userId){
+    if(!userId)return null;
+    try{const saved=JSON.parse(localStorage.getItem(displayPreferenceKey(userId))||'null');return saved&&typeof saved==='object'?normalizeDisplayPreference(saved):null;}catch(_){return null;}
+  }
+  function saveDisplayPreference(userId,value){
+    if(!userId)return;
+    try{localStorage.setItem(displayPreferenceKey(userId),JSON.stringify(normalizeDisplayPreference(value)));}catch(_){}
+  }
+  function applyDisplayPreference(value){
+    const preference=normalizeDisplayPreference(value);
+    document.documentElement.dataset.ppdLayout=preference.layout;
+    document.documentElement.classList.toggle('ppd-edge-to-edge',preference.fullScreenBackground);
+    document.documentElement.classList.toggle('ppd-iphone-layout',preference.layout==='iphone'||(preference.layout==='auto'&&isIOS));
+    return preference;
+  }
+  function restoreDisplayPreferenceForUser(userId,gasPreference){
+    if(!userId)return;
+    const preference=gasPreference&&typeof gasPreference==='object'
+      ?normalizeDisplayPreference(gasPreference):(readDisplayPreference(userId)||DEFAULT_DISPLAY_PREFERENCE);
+    saveDisplayPreference(userId,preference);
+    applyDisplayPreference(preference);
+    postToGAS('PPD_DISPLAY_PREFERENCE',{userId:String(userId),preferences:preference});
+  }
+  applyDisplayPreference(DEFAULT_DISPLAY_PREFERENCE);
   let pushConfigLoaded = false, registrationCheckInFlight = false, registrationCheckPendingUser = '', registrationPromptShownForUser = '';
   let registrationDialogMode = false;
   const REMEMBER_STORAGE='ppd_pwa_remembered_session_v1';
@@ -42,7 +74,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.176':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.177':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -58,13 +90,27 @@
     if(version)$('pwa-splash-version').textContent=version;
     if(persist&&(typeof data.developerName==='string'||version)){try{
       const previous=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'{}');
-      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.174').slice(0,40)}));
+      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.176').slice(0,40)}));
     }catch(_){}}
   }
   try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta&&typeof savedSplashMeta.developerName==='string')applySplashMetadata({developerName:savedSplashMeta.developerName},false);}catch(_){}
-  splashLogo.addEventListener('error',function(){this.removeAttribute('src');this.classList.remove('ppdLogoReady');});
-  splashLogo.addEventListener('load',function(){if(this.naturalWidth>0)this.classList.add('ppdLogoReady');});
-  if(splashLogo.complete&&splashLogo.naturalWidth>0)splashLogo.classList.add('ppdLogoReady');
+  let splashLogoFallbackTimer=setTimeout(showSplashLogoFallback,4500);
+  function showSplashLogoFallback(){
+    if(splashLogo&&!splashLogo.classList.contains('ppdLogoReady')&&splashLogo.parentElement)
+      splashLogo.parentElement.classList.add('ppdLogoFailed');
+  }
+  function markSplashLogoReady(){
+    if(splashLogoFallbackTimer){clearTimeout(splashLogoFallbackTimer);splashLogoFallbackTimer=null;}
+    splashLogo.classList.add('ppdLogoReady');
+    if(splashLogo.parentElement)splashLogo.parentElement.classList.remove('ppdLogoFailed');
+  }
+  splashLogo.addEventListener('error',function(){
+    if(splashLogoFallbackTimer){clearTimeout(splashLogoFallbackTimer);splashLogoFallbackTimer=null;}
+    this.removeAttribute('src');this.classList.remove('ppdLogoReady');
+    if(this.parentElement)this.parentElement.classList.add('ppdLogoFailed');
+  });
+  splashLogo.addEventListener('load',function(){if(this.naturalWidth>0)markSplashLogoReady();});
+  if(splashLogo.complete&&splashLogo.naturalWidth>0)markSplashLogoReady();
   for (const e of [splashLogo]) { e.addEventListener('contextmenu',event=>event.preventDefault()); e.addEventListener('dragstart',event=>event.preventDefault()); }
   const updateBanner = $('update-banner');
   const updateNow = $('update-now'), updateLater = $('update-later');
@@ -452,6 +498,14 @@
       if(d.remembered===true)storeRememberedSession(d.token,d.userId);
     }else if(d.type==='PPD_SESSION_CLEAR'){
       clearSavedSession();
+    }else if(d.type==='PPD_DISPLAY_SETTINGS'){
+      const userId=String(d.userId||'');
+      if(userId){
+        const preference=normalizeDisplayPreference(d.preferences);
+        saveDisplayPreference(userId,preference);
+        if(!currentUserId||currentUserId===userId)applyDisplayPreference(preference);
+      }
+      return;
     }else if(d.type==='PPD_AUTH_READY'){
        applySplashMetadata({developerName:d.developerName,appVersion:d.appVersion},true);
        if(typeof d.logoUrl==='string' && $('pwa-splash-logo')){
@@ -471,6 +525,8 @@
       const wasAuthenticated=authReady, previousUser=currentUserId;
       authReady=!!d.authenticated;
       currentUserId=authReady?String(d.userId||''):'';
+      if(authReady)restoreDisplayPreferenceForUser(currentUserId,d.displayPreferences);
+      else applyDisplayPreference(DEFAULT_DISPLAY_PREFERENCE);
       if(authReady && (!wasAuthenticated || previousUser!==currentUserId)){
         bioUnlockGranted=!!(bioUnlockedForUser&&bioUnlockedForUser===currentUserId);
         deviceRegistered=false;pushReady=false;registrationPromptShownForUser='';registrationCheckPendingUser='';
