@@ -48,14 +48,16 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
   #booking-frame{position:absolute;inset:0;width:100%;height:100%;min-height:0}
 }
 
-/* Standalone phones keep the top system inset in the header; the bottom inset is optional. */
+/* v1.0.0.179: the app shell is pinned to the real screen edges. No bottom strip in any mode.
+   Only the top system inset is padded; the dock offset is handled inside the booking app. */
+@media (max-width:900px){
+  html,body{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;min-height:100%;background:#f3f6f8}
+  .app-shell{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:auto;min-height:0;max-width:none;margin:0;padding-bottom:0;background:#f3f6f8;box-shadow:none}
+}
 @media (max-width:900px) and (display-mode:standalone){
-  html.ppd-standalone,html.ppd-standalone body{background:#f2f4f6}
-  html.ppd-standalone .app-shell{
+  html.ppd-standalone,html.ppd-standalone body{background:#f3f6f8}
+  html.ppd-standalone .app-shell,html.ppd-standalone.ppd-safe-area-on .app-shell{
     padding-top:env(safe-area-inset-top,0px);padding-bottom:0;background:#075b43;
-  }
-  html.ppd-standalone.ppd-safe-area-on .app-shell{
-    padding-bottom:env(safe-area-inset-bottom,0px);background:#fff;
   }
 }
 

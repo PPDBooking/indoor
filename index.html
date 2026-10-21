@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="ppd-starting">
+<html lang="en">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
@@ -25,22 +25,27 @@
     /* Keep the splash artwork and credits within one full-screen overlay, with
        no extra safe-area backdrop left beneath the image. */
     @media (max-width:700px){
-      html.ppd-starting,
-      html.ppd-starting body{
+      html:has(#startup-screen:not([hidden])),
+      html:has(#startup-screen:not([hidden])) body{
         background-color:#075b43;
         background-image:url("./assets/ppd-badminton-splash.webp");
         background-position:center center;
         background-size:cover;
         background-repeat:no-repeat;
       }
-      html.ppd-starting .app-shell{
+      html:has(#startup-screen:not([hidden])) .app-shell{
         padding-top:0;padding-bottom:0;
         background:#075b43 url("./assets/ppd-badminton-splash.webp") center center / cover no-repeat;
       }
-      /* Extend the artwork through the home-indicator inset. Keep the contents
-         in the usable viewport so the credits remain above the system gesture area. */
-      #startup-screen{top:0;left:0;right:0;bottom:calc(0px - env(safe-area-inset-bottom,0px));width:100%;height:calc(100dvh + env(safe-area-inset-bottom,0px));}
-      #startup-screen .ppdSplashInterior{position:absolute;inset:0 0 auto;height:100dvh;max-height:none;width:min(100%,660px);margin:0 auto;flex:none;}
+      /* The fixed overlay already spans the full available viewport. Keep its
+         artwork and credits inside that same box so iOS cannot leave a safe-area strip. */
+      #startup-screen{inset:0;width:100%;height:auto;}
+      #startup-screen .ppdSplashInterior{height:100%;flex:none;}
+    }
+    /* v1.0.0.179: splash is a true full-screen fixed layer (no bottom strip). Credits keep clear of the home indicator. */
+    @media (max-width:900px){
+      #startup-screen{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:auto;min-height:100%}
+      #startup-screen .ppdSplashInterior{position:absolute;inset:0;height:auto;max-height:none;width:min(100%,660px);margin:0 auto;flex:none;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
     }
   </style>
   <link rel="stylesheet" href="./styles.css?v=1.0.0.179">

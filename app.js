@@ -1,4 +1,4 @@
-/* GitHub Pages PWA wrapper v1.0.0.179: full-bleed mobile splash safe-area fix. */
+/* GitHub Pages PWA wrapper v1.0.0.179: shared mobile glass dock and safe-area control. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
@@ -125,7 +125,6 @@
   let startupTimer=null;
   const displayStartup = (message,allowRetry=false) => {
     startupResolved=false; startup.hidden=false; startup.classList.remove('splash-leaving');
-    document.documentElement.classList.add('ppd-starting');
     startupStatus.textContent=message;const splashLabel=$('startup-screen-text');if(splashLabel)splashLabel.textContent=allowRetry?'Connection needs attention':(message==='Checking your saved session securely.'?'Preparing your application...':message);startupActions.hidden=!allowRetry;
     if(!allowRetry && !startupTimer){
       startupTimer=setTimeout(()=>{
@@ -135,7 +134,7 @@
     }
   };
   const completeStartup = () => {
-    startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');setTimeout(()=>{if(startupResolved){startup.hidden=true;document.documentElement.classList.remove('ppd-starting');}},400);
+    startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');setTimeout(()=>{if(startupResolved)startup.hidden=true;},400);
     if(startupTimer){clearTimeout(startupTimer);startupTimer=null;}
   };
   try{const lastBrand=localStorage.getItem('ppd_public_brand_logo');if(lastBrand && /^https:\/\//i.test(lastBrand))$('pwa-splash-logo').src=lastBrand;}catch(_){}
@@ -363,16 +362,20 @@
     });
     return navigator.serviceWorker.ready;
   }
+  const safeProbe=document.createElement('div');
+  safeProbe.style.cssText='position:fixed;left:0;bottom:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-bottom:env(safe-area-inset-bottom,0px)';
+  document.documentElement.appendChild(safeProbe);
+  const safeBottom=()=>{const v=parseFloat(getComputedStyle(safeProbe).paddingBottom);return isFinite(v)&&v>=0&&v<=80?Math.round(v):0;};
   function postToGAS(type, extra={}) {
     if(!gasWindow || !gasOrigin)return;
     // Reply to the exact authenticated Apps Script HTMLService window (often nested).
     // Only browser Push subscription metadata and navigation intents cross this bridge.
-    gasWindow.postMessage({source:'PPD_PWA',type,...extra},gasOrigin);
+    gasWindow.postMessage({source:'PPD_PWA',type,safeBottom:safeBottom(),...extra},gasOrigin);
   }
   function requestAuthResync(){
     // The script.google.com outer iframe can contain a nested googleusercontent frame.
     // Both receive a query; only the trusted GAS UI is allowed to answer.
-    const msg={source:'PPD_PWA',type:'PPD_AUTH_QUERY'};
+    const msg={source:'PPD_PWA',type:'PPD_AUTH_QUERY',safeBottom:safeBottom()};
     try{iframe.contentWindow?.postMessage(msg,'https://script.google.com');}catch(e){}
     if(gasWindow&&gasOrigin)postToGAS('PPD_AUTH_QUERY');
   }
