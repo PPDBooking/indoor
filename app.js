@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.0.186: shared mobile glass dock and safe-area control. */
+/* GitHub Pages PWA wrapper v1.0.0.187: shared mobile glass dock and safe-area control. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.0.186';
-  const PWA_BUILD_NUMBER='186';
+  const PWA_VERSION='1.0.0.187';
+  const PWA_BUILD_NUMBER='187';
   const PWA_RELEASE_DATE='2026-10-22';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -20,7 +20,7 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   document.documentElement.classList.toggle('ppd-standalone',standalone());
   document.documentElement.classList.toggle('ppd-ios',isIOS);
-  /* v1.0.0.186: full-height fix for iOS standalone. Uses screen.height only, never innerHeight, so it cannot oscillate. */
+  /* v1.0.0.187: full-height fix for iOS standalone. Uses screen.height only, never innerHeight, so it cannot oscillate. */
   function applyFullHeight(){
     const root=document.documentElement;
     try{
@@ -32,7 +32,7 @@
   }
   applyFullHeight();
   ['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(applyFullHeight,80)));
-  /* v1.0.0.186: debug panel is now off by default (set DEBUG_STANDALONE_SECONDS above 0 to bring it back) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
+  /* v1.0.0.187: debug panel is now off by default (set DEBUG_STANDALONE_SECONDS above 0 to bring it back) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
   (function(){
     const DEBUG_STANDALONE_SECONDS=0;
     const forced=/[?&]ppddebug=1/.test(location.search);
@@ -113,7 +113,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.186':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.0.187':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -184,7 +184,7 @@
   try{const lastBrand=localStorage.getItem('ppd_public_brand_logo');if(lastBrand && /^https:\/\//i.test(lastBrand))$('pwa-splash-logo').src=lastBrand;}catch(_){}
   displayStartup('Checking your saved session securely.');
   $('startup-retry').addEventListener('click',()=>{
-    displayStartup('Reconnecting to the court app…');
+    displayStartup('Reconnecting to the court app\u2026');
     if(gasWindow&&gasOrigin)requestAuthResync();
     else iframe.src=GAS_URL;
   });
@@ -192,7 +192,7 @@
   updateNow.addEventListener('click',()=>{
     if(!pendingWorker)return;
     if(!confirm('Updating will reload this app. Complete any booking or unsaved form first. Update now?'))return;
-    updateNow.disabled=true;updateNow.textContent='Updating…';
+    updateNow.disabled=true;updateNow.textContent='Updating\u2026';
     workerReloading=true;pendingWorker.postMessage({type:'PPD_SW_ACTIVATE'});
   });
   updateLater.addEventListener('click',()=>{updateBanner.hidden=true;});
@@ -316,7 +316,7 @@
   const bioGate=document.createElement('section');
   bioGate.className='ppd-biometric-gate';bioGate.setAttribute('role','dialog');
   bioGate.setAttribute('aria-modal','true');bioGate.setAttribute('aria-label','Unlock court app');
-  bioGate.innerHTML='<div class="ppd-biometric-card"><div class="ppd-biometric-symbol" aria-hidden="true">🔐</div><h2>Unlock Point Pedro Court</h2><p>Use your device fingerprint, face or screen lock to continue.</p><button type="button" class="ppd-biometric-unlock">Unlock App</button><button type="button" class="ppd-biometric-signout">Sign out & use password</button><small class="ppd-biometric-message" role="status"></small></div>';
+  bioGate.innerHTML='<div class="ppd-biometric-card"><div class="ppd-biometric-symbol" aria-hidden="true">\ud83d\udd10</div><h2>Unlock Point Pedro Court</h2><p>Use your device fingerprint, face or screen lock to continue.</p><button type="button" class="ppd-biometric-unlock">Unlock App</button><button type="button" class="ppd-biometric-signout">Sign out & use password</button><small class="ppd-biometric-message" role="status"></small></div>';
   document.body.appendChild(bioGate);
   const bioMsg=bioGate.querySelector('.ppd-biometric-message');
   const bioStatus=msg=>{bioMsg.textContent=msg;};
@@ -445,7 +445,7 @@
     // An iframe document navigation needs its own server-confirmed auth handshake.
     if(startupResolved){
       authReady=false;currentUserId='';
-      displayStartup('Checking the court session after navigation…');
+      displayStartup('Checking the court session after navigation\u2026');
       bioUnlockGranted=false;bioPresent();
     }
     requestAuthResync();
@@ -466,7 +466,7 @@
     registrationDialogMode=!!enabled;
     const title=$('notifications-title'),subtitle=dialog.querySelector('.dialog-heading p'),notice=dialog.querySelector('.notice-box p');
     if(title)title.textContent=registrationDialogMode?'Complete device registration':'Mobile notifications';
-    if(subtitle)subtitle.textContent=registrationDialogMode?'Notifications are allowed — one final step':'Push settings for this device';
+    if(subtitle)subtitle.textContent=registrationDialogMode?'Notifications are allowed \u2014 one final step':'Push settings for this device';
     if(notice)notice.textContent=registrationDialogMode?'Notifications permission is already allowed. Continue to link this device to your signed-in booking account.':'Golden Bell stays in your booking app. This setting controls permission for phone notifications while the app is closed.';
   }
   function showRegistrationPrompt(userId,message){
@@ -505,7 +505,7 @@
     enable.textContent=p==='granted'?(authReady?(deviceRegistered?'Refresh device registration':'Continue & register this device'):'Login to finish device registration'):'Enable notifications';
     testLocal.disabled=!hasApis()||p!=='granted';
     testReal.disabled=!(deviceRegistered&&pushReady&&authReady);
-    delivery.textContent=deviceRegistered?(pushReady?'Device linked · sender enabled':'Device linked · sender not configured'):'Not connected';
+    delivery.textContent=deviceRegistered?(pushReady?'Device linked \u00b7 sender enabled':'Device linked \u00b7 sender not configured'):'Not connected';
     // Setup launcher disappears after the device has been registered; open ?notifications=1 to manage later.
     setup.hidden=deviceRegistered&&pushReady || new URLSearchParams(location.search).has('hidesetup');
     $('ios-install-tip').hidden=!isIOS||standalone();
@@ -585,7 +585,7 @@
       postToGAS('PPD_AUTH_ACK');
       authRestoring=!!d.restoring;
       if(authRestoring){
-        if(startupActions.hidden)displayStartup('Restoring your saved login securely…');
+        if(startupActions.hidden)displayStartup('Restoring your saved login securely\u2026');
         bioPresent();
         return;
       }
@@ -618,7 +618,7 @@
       authReady=false;currentUserId='';bioUnlockedForUser='';bioUnlockGranted=true;
       registrationCheckPendingUser='';registrationPromptShownForUser='';deviceRegistered=false;pushReady=false;
       clearSavedSession();
-      displayStartup('Your saved session expired. Opening sign-in…');bioPresent();
+      displayStartup('Your saved session expired. Opening sign-in\u2026');bioPresent();
     }else if(d.type==='PPD_BIO_FORGOTTEN'){
       if(bioForgetRequested && d.ok){localStorage.removeItem(BIO_STORAGE);bioUnlockGranted=true;
         bioPresent();bioForgetRequested=false;location.reload();}
@@ -655,10 +655,10 @@
   enable.addEventListener('click',()=>{requestAuthResync();requestPermissionAndRegister();});
   testLocal.addEventListener('click',async()=>{
     if(Notification.permission!=='granted')return;
-    try{const r=await ensureSW();await r.showNotification('Point Pedro Indoor Court',{body:'Local test only — not a booking notification.',icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:'ppd-local-test',data:{url:new URL('./',location.href).href}});setDetails('Local test notification shown; this is not an end-to-end push test.');}
+    try{const r=await ensureSW();await r.showNotification('Point Pedro Indoor Court',{body:'Local test only \u2014 not a booking notification.',icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:'ppd-local-test',data:{url:new URL('./',location.href).href}});setDetails('Local test notification shown; this is not an end-to-end push test.');}
     catch(e){setDetails('Local test failed: '+String(e.message||e));}
   });
-  testReal.addEventListener('click',()=>{postToGAS('PPD_PUSH_TEST');setDetails('Requesting a real Push test from the authenticated booking app…');});
+  testReal.addEventListener('click',()=>{postToGAS('PPD_PUSH_TEST');setDetails('Requesting a real Push test from the authenticated booking app\u2026');});
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;install.hidden=false;});
   install.addEventListener('click',async()=>{
     if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;install.hidden=true;}

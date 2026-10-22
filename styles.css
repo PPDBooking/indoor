@@ -48,7 +48,7 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
   #booking-frame{position:absolute;inset:0;width:100%;height:100%;min-height:0}
 }
 
-/* v1.0.0.186: the app shell is pinned to the real screen edges. No bottom strip in any mode.
+/* v1.0.0.187: the app shell is pinned to the real screen edges. No bottom strip in any mode.
    Only the top system inset is padded; the dock offset is handled inside the booking app. */
 @media (max-width:900px){
   html,body{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;min-height:100%;background:#f3f6f8}
@@ -64,7 +64,7 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 /* Approved badminton artwork only: no gradient overlay or decorative artwork layer. */
 .ppdSplashNew{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;background-color:transparent;background-image:none;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;transition:opacity .4s ease}
 .ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;transition:none;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.186");background-position:center center;background-size:cover}}
+@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.0.187");background-position:center center;background-size:cover}}
 .ppdSplashNew.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
 .ppdSplashNew.splash-leaving,.ppdSplashNew.ppdSplashLeaving{opacity:0;pointer-events:none}
 
@@ -114,7 +114,7 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 @media(prefers-reduced-motion:reduce){.startup-screen{transition:none}}
 
 
-/* v1.0.0.186: iOS standalone reports a layout viewport 62px shorter than the screen.
+/* v1.0.0.187: iOS standalone reports a layout viewport 62px shorter than the screen.
    Phones therefore use a normal-flow html/body with an explicit full height (--ppd-full, set once in app.js);
    the shell and splash are absolutely positioned inside it. No fixed/overflow clipping involved. */
 @media (max-width:900px){
