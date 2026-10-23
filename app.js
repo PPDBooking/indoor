@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.1.201: shared mobile glass dock and safe-area control. */
+/* GitHub Pages PWA wrapper v1.0.1.204: shared mobile glass dock and safe-area control. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.201';
-  const PWA_BUILD_NUMBER='201';
+  const PWA_VERSION='1.0.1.204';
+  const PWA_BUILD_NUMBER='204';
   const PWA_RELEASE_DATE='2026-10-23';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -20,7 +20,7 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   document.documentElement.classList.toggle('ppd-standalone',standalone());
   document.documentElement.classList.toggle('ppd-ios',isIOS);
-  /* v1.0.1.201: full-height fix for iOS standalone. Uses screen.height only, never innerHeight, so it cannot oscillate. */
+  /* v1.0.1.204: full-height fix for iOS standalone. Uses screen.height only, never innerHeight, so it cannot oscillate. */
   function applyFullHeight(){
     const root=document.documentElement;
     try{
@@ -32,7 +32,7 @@
   }
   applyFullHeight();
   ['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(applyFullHeight,80)));
-  /* v1.0.1.201: debug panel is now off by default (set DEBUG_STANDALONE_SECONDS above 0 to bring it back) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
+  /* v1.0.1.204: debug panel is now off by default (set DEBUG_STANDALONE_SECONDS above 0 to bring it back) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
   (function(){
     const DEBUG_STANDALONE_SECONDS=0;
     const forced=/[?&]ppddebug=1/.test(location.search);
@@ -113,7 +113,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.201':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.204':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -415,7 +415,7 @@
   safeProbe.style.cssText='position:fixed;left:0;bottom:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-bottom:env(safe-area-inset-bottom,0px)';
   document.documentElement.appendChild(safeProbe);
   const safeBottom=()=>{const v=parseFloat(getComputedStyle(safeProbe).paddingBottom);return isFinite(v)&&v>=0&&v<=80?Math.round(v):0;};
-  /* v1.0.1.201: the frame runs under the status bar, so the wrapper reports the top inset to the app header. */
+  /* v1.0.1.204: the frame runs under the status bar, so the wrapper reports the top inset to the app header. */
   const safeTopProbe=document.createElement('div');
   safeTopProbe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px)';
   document.documentElement.appendChild(safeTopProbe);
