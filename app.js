@@ -1,12 +1,12 @@
-/* GitHub Pages PWA wrapper v1.0.1.205: shared mobile glass dock and safe-area control. */
+/* GitHub Pages PWA wrapper v1.0.1.206: shared mobile glass dock and safe-area control. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.205';
-  const PWA_BUILD_NUMBER='205';
-  const PWA_RELEASE_DATE='2026-10-25';
+  const PWA_VERSION='1.0.1.206';
+  const PWA_BUILD_NUMBER='206';
+  const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
   const enable = $('enable-notifications-button');
@@ -426,6 +426,39 @@
     // Only browser Push subscription metadata and navigation intents cross this bridge.
     gasWindow.postMessage({source:'PPD_PWA',type,safeBottom:safeBottom(),safeTop:safeTop(),...extra},gasOrigin);
   }
+  // v1.0.1.206: real native PWA action inside the embedded Player Settings page.
+  // Only positioning data and display status are exchanged, never credentials.
+  const inlinePushNative=$('ppd-inline-push-native');
+  let inlinePushVisible=false, inlinePushSlot=null;
+  function pushInlineStatus(){
+    if(!inlinePushVisible||!authReady||!currentUserId)return;
+    const perm=(!hasApis())?'Unavailable':Notification.permission==='granted'?'Allowed':Notification.permission==='denied'?'Blocked':'Not requested';
+    postToGAS('PPD_PUSH_INLINE_STATUS',{
+      userId:currentUserId,permission:perm,delivery:delivery.textContent,
+      details:details.textContent,action:enable.textContent,actionDisabled:enable.disabled,
+      installed:standalone()
+    });
+  }
+  function positionInlineNative(){
+    if(!inlinePushVisible||!inlinePushSlot||!authReady||document.documentElement.classList.contains('ppd-biometric-locked')){inlinePushNative.hidden=true;return;}
+    const box=iframe.getBoundingClientRect(),r=inlinePushSlot;
+    if(!r.visible||!Number.isFinite(r.left)||!Number.isFinite(r.top)||!Number.isFinite(r.width)||!Number.isFinite(r.height)||r.width<100||r.height<36){inlinePushNative.hidden=true;return;}
+    const left=box.left+r.left,top=box.top+r.top;
+    if(left<box.left-1||top<box.top-1||left+r.width>box.right+1||top+r.height>box.bottom+1){inlinePushNative.hidden=true;return;}
+    inlinePushNative.style.left=Math.round(left)+'px';inlinePushNative.style.top=Math.round(top)+'px';
+    inlinePushNative.style.width=Math.round(r.width)+'px';inlinePushNative.style.height=Math.round(r.height)+'px';
+    inlinePushNative.disabled=enable.disabled;
+    inlinePushNative.textContent=enable.textContent;
+    inlinePushNative.hidden=false;
+  }
+  inlinePushNative.addEventListener('click',()=>{
+    // Direct click on the GitHub PWA origin preserves iOS notification user gesture.
+    if(!inlinePushVisible||!authReady||inlinePushNative.disabled||document.documentElement.classList.contains('ppd-biometric-locked'))return;
+    setDetails('Checking device permission and registration...');pushInlineStatus();
+    requestPermissionAndRegister();
+  });
+  window.addEventListener('resize',positionInlineNative);
+  window.addEventListener('orientationchange',positionInlineNative);
   function pwaInfoPayload(){
     let lastSuccessfulUpdate='';
     try{lastSuccessfulUpdate=localStorage.getItem(PWA_LAST_UPDATE_KEY)||'';}catch(_){}
@@ -446,6 +479,7 @@
     if(gasWindow&&gasOrigin)postToGAS('PPD_AUTH_QUERY');
   }
   iframe.addEventListener('load',()=>{
+    inlinePushVisible=false;inlinePushSlot=null;inlinePushNative.hidden=true;
     bridgeProbeCount=0;
     // An iframe document navigation needs its own server-confirmed auth handshake.
     if(startupResolved){
@@ -477,6 +511,12 @@
   function showRegistrationPrompt(userId,message){
     const id=String(userId||'');
     if(!authReady||!id||id!==currentUserId||!hasApis()||Notification.permission!=='granted'||(isIOS&&!standalone()))return;
+    // When the inline Player Settings page is open, NEVER open the original
+    // PWA registration popup. The same registration happens inside that page.
+    if(inlinePushVisible){
+      setDetails(message||'Notifications are allowed. Register this device below to finish connecting your account.');
+      refreshUI(true);pushInlineStatus();return;
+    }
     if(registrationPromptShownForUser===id)return;
     registrationPromptShownForUser=id;
     setRegistrationDialogMode(true);
@@ -526,6 +566,7 @@
       else setDetails('Enable notifications on this device. Golden Bell remains unchanged.');
     }
     sendPwaInfo();
+    pushInlineStatus();positionInlineNative();
   }
   async function registerDevice(force=false){
     if(!hasApis() || Notification.permission!=='granted')return;
@@ -553,6 +594,32 @@
     if(gasWindow && event.source!==gasWindow)return;
     if(!gasWindow){gasWindow=event.source;gasOrigin=event.origin;}
     const d=event.data;
+    if(d.type==='PPD_PUSH_INLINE_VIEW'){
+      inlinePushVisible=!!(d.visible&&authReady&&currentUserId&&String(d.userId||'')===currentUserId);
+      if(!inlinePushVisible){inlinePushSlot=null;inlinePushNative.hidden=true;}
+      else{refreshUI();if(hasApis()&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);}
+      positionInlineNative();pushInlineStatus();return;
+    }else if(d.type==='PPD_PUSH_INLINE_SLOT'){
+      if(inlinePushVisible&&authReady&&String(d.userId||'')===currentUserId){
+        const r=d.rect||{};
+        inlinePushSlot={visible:d.visible===true,left:Number(r.left),top:Number(r.top),width:Number(r.width),height:Number(r.height)};
+        positionInlineNative();
+      }return;
+    }else if(d.type==='PPD_PUSH_INLINE_STATUS_REQUEST'){
+      if(inlinePushVisible&&authReady&&String(d.userId||'')===currentUserId){refreshUI();if(hasApis()&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);}
+      return;
+    }else if(d.type==='PPD_PUSH_INLINE_ACTION'){
+      if(!inlinePushVisible||!authReady||!currentUserId||String(d.userId||'')!==currentUserId)return;
+      if(d.action==='real-test'){
+        if(!(deviceRegistered&&pushReady)){
+          postToGAS('PPD_PUSH_INLINE_RESULT',{userId:currentUserId,ok:false,message:'Register and connect this device before testing real push.'});return;
+        }
+        postToGAS('PPD_PUSH_TEST');setDetails('Requesting real push test from the authenticated booking app...');pushInlineStatus();
+      }else if(d.action==='local-test'){
+        testLocal.click();
+      }
+      return;
+    }
     if(d.type==='PPD_SPLASH_METADATA'){
        applySplashMetadata(d,true);
        postToGAS('PPD_SPLASH_METADATA_ACK');
@@ -611,7 +678,7 @@
         bioUnlockGranted=!!(bioUnlockedForUser&&bioUnlockedForUser===currentUserId);
         deviceRegistered=false;pushReady=false;registrationPromptShownForUser='';registrationCheckPendingUser='';
       }
-      if(!authReady){deviceRegistered=false;pushReady=false;registrationCheckPendingUser='';registrationPromptShownForUser='';}
+      if(!authReady){deviceRegistered=false;pushReady=false;registrationCheckPendingUser='';registrationPromptShownForUser='';inlinePushVisible=false;inlinePushSlot=null;inlinePushNative.hidden=true;}
       completeStartup();bioPresent();sendPwaInfo();
       if(authReady&&(!wasAuthenticated||previousUser!==currentUserId)){
         registrationPromptShownForUser='';
@@ -628,7 +695,7 @@
     }else if(d.type==='PPD_BIO_SESSION_GONE'){
       // Expired GAS session requires password. Wait for GAS to finish loading the
       // public page before removing our startup shield; keep the opt-in preference.
-      authReady=false;currentUserId='';bioUnlockedForUser='';bioUnlockGranted=true;
+      authReady=false;currentUserId='';bioUnlockedForUser='';bioUnlockGranted=true;inlinePushVisible=false;inlinePushSlot=null;inlinePushNative.hidden=true;
       registrationCheckPendingUser='';registrationPromptShownForUser='';deviceRegistered=false;pushReady=false;
       clearSavedSession();
       displayStartup('Your saved session expired. Opening sign-in\u2026');bioPresent();
@@ -646,6 +713,7 @@
         setDetails('Device registration error: '+String(d.error||'Please sign in again.'));
       }
     }else if(d.type==='PPD_TEST_RESULT'){
+      if(inlinePushVisible)postToGAS('PPD_PUSH_INLINE_RESULT',{userId:currentUserId,ok:!!d.ok,message:d.ok?'Real push test queued via GitHub Actions.':'Real push test failed: '+String(d.error||'Unknown error')});
       setDetails(d.ok?'Real Push queued. It may take time for GitHub Actions to execute; lock screen delivery is not yet guaranteed.':'Real push test failed: '+String(d.error||'Unknown error'));
     }else if(d.type==='PPD_STATUS_RESULT'){
       if(d.registrationCheck===true&&authReady&&String(d.registrationCheckUserId||'')===currentUserId&&registrationCheckPendingUser===currentUserId){
@@ -667,9 +735,9 @@
   dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
   enable.addEventListener('click',()=>{requestAuthResync();requestPermissionAndRegister();});
   testLocal.addEventListener('click',async()=>{
-    if(Notification.permission!=='granted')return;
-    try{const r=await ensureSW();await r.showNotification('Point Pedro Indoor Court',{body:'Local test only \u2014 not a booking notification.',icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:'ppd-local-test',data:{url:new URL('./',location.href).href}});setDetails('Local test notification shown; this is not an end-to-end push test.');}
-    catch(e){setDetails('Local test failed: '+String(e.message||e));}
+    if(!hasApis()||Notification.permission!=='granted'){if(inlinePushVisible)postToGAS('PPD_PUSH_INLINE_RESULT',{userId:currentUserId,ok:false,message:'Allow notifications on this device before testing.'});return;}
+    try{const r=await ensureSW();await r.showNotification('Point Pedro Indoor Court',{body:'Local test only \u2014 not a booking notification.',icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:'ppd-local-test',data:{url:new URL('./',location.href).href}});setDetails('Local test notification shown; this is not an end-to-end push test.');if(inlinePushVisible)postToGAS('PPD_PUSH_INLINE_RESULT',{userId:currentUserId,ok:true,message:'Local test notification shown.'});}
+    catch(e){setDetails('Local test failed: '+String(e.message||e));if(inlinePushVisible)postToGAS('PPD_PUSH_INLINE_RESULT',{userId:currentUserId,ok:false,message:'Local test failed: '+String(e.message||e).slice(0,120)});}
   });
   testReal.addEventListener('click',()=>{postToGAS('PPD_PUSH_TEST');setDetails('Requesting a real Push test from the authenticated booking app\u2026');});
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;install.hidden=false;});
@@ -677,7 +745,7 @@
     if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;install.hidden=true;}
     else if(isIOS){$('ios-install-tip').hidden=false;}
   });
-  window.addEventListener('appinstalled',()=>{install.hidden=true;deferredInstall=null;});
+  window.addEventListener('appinstalled',()=>{install.hidden=true;deferredInstall=null;sendPwaInfo();pushInlineStatus();});
   window.addEventListener('online',()=>{$('offline-note').hidden=true;sendPwaInfo();});
   window.addEventListener('offline',()=>{$('offline-note').hidden=false;sendPwaInfo();});
   $('offline-note').hidden=navigator.onLine;

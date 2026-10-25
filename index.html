@@ -64,9 +64,9 @@
       #startup-screen .ppdSplashInterior{position:absolute;inset:0;height:auto;max-height:none;width:min(100%,660px);margin:0 auto;flex:none;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=1.0.1.205">
+  <link rel="stylesheet" href="./styles.css?v=1.0.1.206">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js?v=1.0.1.205" defer></script>
+  <script src="./app.js?v=1.0.1.206" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -86,6 +86,9 @@
       <div id="offline-note" class="offline-note" role="status" hidden>Internet connection lost. Existing booking content may not load until you reconnect.</div>
     </main>
   </div>
+  <!-- PWA-origin button displayed exactly inside the Apps Script Player Settings card.
+       Keeps iOS user activation on the top-level origin; old bell/dialog remain intact. -->
+  <button id="ppd-inline-push-native" type="button" hidden aria-label="Enable or refresh this device notifications">Enable notifications</button>
 <section id="startup-screen" class="ppdSplashNew" role="status" aria-label="Preparing court application" aria-live="polite">
     <div class="ppdSplashBackground" aria-hidden="true"></div>
     <div class="ppdSplashInterior">
