@@ -1,10 +1,10 @@
-/* Point Pedro Court GitHub Pages shell v1.0.1.216.
+/* Point Pedro Court GitHub Pages shell v1.0.1.204.
    GAS iframe / Google Sheets / authentication responses are NEVER cached here. */
 'use strict';
-const CACHE_NAME='ppd-wrapper-shell-v1.0.1.216';
+const CACHE_NAME='ppd-wrapper-shell-v1.0.1.204';
 const PREFIX='ppd-wrapper-shell-';
 const SCOPE_URL=new URL('./',self.registration.scope);
-const CORE_FILES=['./','./index.html','./styles.css?v=1.0.1.216','./app.js?v=1.0.1.216','./assets/ppd-badminton-splash.webp','./assets/ppd-badminton-desktop.webp?v=1.0.1.213'];
+const CORE_FILES=['./','./index.html','./styles.css?v=1.0.1.204','./app.js?v=1.0.1.204','./assets/ppd-badminton-splash.webp','./assets/ppd-badminton-desktop.webp?v=1.0.1.204'];
 const OPTIONAL_FILES=['./manifest.webmanifest','./push-config.json',
   './icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
 const isScopeURL=url=>url.origin===SCOPE_URL.origin&&url.pathname.startsWith(SCOPE_URL.pathname);
@@ -63,8 +63,7 @@ self.addEventListener('push',event=>{
   event.waitUntil((async()=>{
     await self.registration.showNotification(title,{
       body,icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',
-      tag:String(data.tag||'ppd-booking-alert').slice(0,100),
-      data:{url:safeURL,relatedId:String(data.relatedId||'').slice(0,100),eventType:String(data.eventType||'').slice(0,70)}
+      tag:String(data.tag||'ppd-booking-alert').slice(0,100),data:{url:safeURL}
     });
     const list=await self.clients.matchAll({type:'window',includeUncontrolled:true});
     list.forEach(client=>client.postMessage({type:'PPD_PUSH_RECEIVED'}));
@@ -75,24 +74,10 @@ self.addEventListener('notificationclick',event=>{
   event.waitUntil((async()=>{
     let url=SCOPE_URL.href;
     try{const u=new URL(event.notification.data?.url||url,SCOPE_URL);if(isScopeURL(u))url=u.href;}catch(_){}
-    const relatedId=String(event.notification.data?.relatedId||'');
-    const eventType=String(event.notification.data?.eventType||'').toUpperCase();
-    const hasTarget=/^[A-Za-z0-9_-]{4,100}$/.test(relatedId)&&/^[A-Z0-9_]{2,70}$/.test(eventType);
-    if(hasTarget){
-      url=new URL('./',SCOPE_URL).href;
-      const target=new URL(url);
-      target.searchParams.set('ppdref',relatedId);
-      target.searchParams.set('ppdtype',eventType);
-      url=target.href;
-    }
     const list=await self.clients.matchAll({type:'window',includeUncontrolled:true});
     for(const client of list){
       try{const u=new URL(client.url);if(isScopeURL(u)){
-        await client.focus();
-        if(hasTarget){client.postMessage({type:'PPD_PUSH_OPEN_RECORD',relatedId,eventType});return;}
-        // Legacy push links navigate only when they explicitly contain a route.
-        if(client.navigate&&u.href!==url&&new URL(url).searchParams.has('ppdpage'))await client.navigate(url);
-        return;
+        await client.focus();if(client.navigate&&client.url!==url)await client.navigate(url);return;
       }}catch(_){}
     }
     return self.clients.openWindow(url);

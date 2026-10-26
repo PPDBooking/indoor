@@ -1,12 +1,12 @@
-/* GitHub Pages PWA wrapper v1.0.1.216: status-area background follows active splash/home state. */
+/* GitHub Pages PWA wrapper v1.0.1.204: shared mobile glass dock and safe-area control. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.216';
-  const PWA_BUILD_NUMBER='216';
-  const PWA_RELEASE_DATE='2026-10-26';
+  const PWA_VERSION='1.0.1.204';
+  const PWA_BUILD_NUMBER='204';
+  const PWA_RELEASE_DATE='2026-10-23';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
   const enable = $('enable-notifications-button');
@@ -20,6 +20,46 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   document.documentElement.classList.toggle('ppd-standalone',standalone());
   document.documentElement.classList.toggle('ppd-ios',isIOS);
+  /* v1.0.1.204: full-height fix for iOS standalone. Uses screen.height only, never innerHeight, so it cannot oscillate. */
+  function applyFullHeight(){
+    const root=document.documentElement;
+    try{
+      const portrait=window.innerHeight>window.innerWidth;
+      const full=screen.height||0;
+      if(isIOS&&standalone()&&portrait&&full>=500&&full<=1400)root.style.setProperty('--ppd-full',full+'px');
+      else root.style.removeProperty('--ppd-full');
+    }catch(_){root.style.removeProperty('--ppd-full');}
+  }
+  applyFullHeight();
+  ['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(applyFullHeight,80)));
+  /* v1.0.1.204: debug panel is now off by default (set DEBUG_STANDALONE_SECONDS above 0 to bring it back) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
+  (function(){
+    const DEBUG_STANDALONE_SECONDS=0;
+    const forced=/[?&]ppddebug=1/.test(location.search);
+    if(!(forced||(DEBUG_STANDALONE_SECONDS>0&&standalone())))return;
+    const root=document.documentElement;
+    const setFull=applyFullHeight;
+    const wrap=document.createElement('div');
+    wrap.style.cssText='position:fixed;z-index:2147483647;left:6px;top:70px;font:11px/1.35 monospace;color:#7dffb0;background:#000c;border-radius:8px;padding:6px 8px;max-width:78vw';
+    const pre=document.createElement('pre');pre.style.cssText='margin:0 0 6px;white-space:pre;pointer-events:none';
+    const row=document.createElement('div');row.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
+    wrap.appendChild(pre);wrap.appendChild(row);root.appendChild(wrap);
+    const probe=document.createElement('div');
+    probe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
+    root.appendChild(probe);
+    let current='off';
+    const show=()=>{setFull();const cs=getComputedStyle(probe),vv=window.visualViewport;
+      pre.textContent=['variant '+current,'screen '+screen.width+'x'+screen.height,'inner '+innerWidth+'x'+innerHeight,'visual '+(vv?Math.round(vv.width)+'x'+Math.round(vv.height):'n/a'),'docEl '+root.clientHeight,'inset top '+cs.paddingTop+' bottom '+cs.paddingBottom,'standalone '+standalone()].join('\n');};
+    ['off','x1','x2','x3','x4'].forEach(v=>{
+      const b=document.createElement('button');b.type='button';b.textContent=v==='off'?'Off':v.toUpperCase();
+      b.style.cssText='min-width:44px;min-height:34px;border-radius:7px;border:1px solid #7dffb0;background:#06301f;color:#fff;font:12px monospace';
+      b.addEventListener('click',()=>{['x1','x2','x3','x4'].forEach(k=>root.classList.remove('ppd-'+k));if(v!=='off')root.classList.add('ppd-'+v);current=v;show();});
+      row.appendChild(b);
+    });
+    show();['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(show,80)));
+    const timer=setInterval(show,1500);
+    if(!forced)setTimeout(()=>{clearInterval(timer);wrap.remove();probe.remove();},DEBUG_STANDALONE_SECONDS*1000);
+  })();
   const hasApis = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window) && window.isSecureContext;
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
   let gasWindow = null, gasOrigin = '', currentUserId = '';
@@ -73,7 +113,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.213':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.204':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -89,10 +129,10 @@
     if(version)$('pwa-splash-version').textContent=version;
     if(persist&&(typeof data.developerName==='string'||version)){try{
       const previous=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'{}');
-      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'').slice(0,40)}));
+      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.188').slice(0,40)}));
     }catch(_){}}
   }
-  try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta)applySplashMetadata({developerName:savedSplashMeta.developerName,appVersion:savedSplashMeta.appVersion},false);}catch(_){}
+  try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta&&typeof savedSplashMeta.developerName==='string')applySplashMetadata({developerName:savedSplashMeta.developerName},false);}catch(_){}
   let splashLogoFallbackTimer=setTimeout(showSplashLogoFallback,2000);
   function showSplashLogoFallback(){
     if(splashLogo&&!splashLogo.classList.contains('ppdLogoReady')&&splashLogo.parentElement)
@@ -127,10 +167,8 @@
   })();
   iframe.src = GAS_URL;
   let startupTimer=null;
-  let appPainted=false, paintTimer=null;
-  const PAINT_WAIT_MS=8000;
   const displayStartup = (message,allowRetry=false) => {
-    appPainted=false; startupResolved=false; startup.hidden=false; startup.classList.remove('splash-leaving'); document.documentElement.classList.add('ppd-splash-active');
+    startupResolved=false; startup.hidden=false; startup.classList.remove('splash-leaving');
     startupStatus.textContent=message;const splashLabel=$('startup-screen-text');if(splashLabel)splashLabel.textContent=allowRetry?'Connection needs attention':(message==='Checking your saved session securely.'?'Preparing your application...':message);startupActions.hidden=!allowRetry;
     if(!allowRetry && !startupTimer){
       startupTimer=setTimeout(()=>{
@@ -140,16 +178,10 @@
     }
   };
   const completeStartup = () => {
-    startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');document.documentElement.classList.remove('ppd-splash-active');setTimeout(()=>{if(startupResolved)startup.hidden=true;},400);
+    startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');setTimeout(()=>{if(startupResolved)startup.hidden=true;},400);
     if(startupTimer){clearTimeout(startupTimer);startupTimer=null;}
-    if(paintTimer){clearTimeout(paintTimer);paintTimer=null;}
   };
-  /* v1.0.1.210: the splash stays up until the booking app reports its first painted page (PPD_APP_PAINTED), so no blank white gap appears.
-     A fallback timer prevents the splash from ever getting stuck. */
-  const completeStartupWhenPainted = () => {
-    if(appPainted){completeStartup();return;}
-    if(!paintTimer)paintTimer=setTimeout(()=>{paintTimer=null;completeStartup();bioPresent();},PAINT_WAIT_MS);
-  };
+  try{const lastBrand=localStorage.getItem('ppd_public_brand_logo');if(lastBrand && /^https:\/\//i.test(lastBrand))$('pwa-splash-logo').src=lastBrand;}catch(_){}
   displayStartup('Checking your saved session securely.');
   $('startup-retry').addEventListener('click',()=>{
     displayStartup('Reconnecting to the court app\u2026');
@@ -383,7 +415,7 @@
   safeProbe.style.cssText='position:fixed;left:0;bottom:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-bottom:env(safe-area-inset-bottom,0px)';
   document.documentElement.appendChild(safeProbe);
   const safeBottom=()=>{const v=parseFloat(getComputedStyle(safeProbe).paddingBottom);return isFinite(v)&&v>=0&&v<=80?Math.round(v):0;};
-  /* v1.0.1.205: the frame runs under the status bar, so the wrapper reports the top inset to the app header. */
+  /* v1.0.1.204: the frame runs under the status bar, so the wrapper reports the top inset to the app header. */
   const safeTopProbe=document.createElement('div');
   safeTopProbe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;pointer-events:none;padding-top:env(safe-area-inset-top,0px)';
   document.documentElement.appendChild(safeTopProbe);
@@ -394,43 +426,6 @@
     // Only browser Push subscription metadata and navigation intents cross this bridge.
     gasWindow.postMessage({source:'PPD_PWA',type,safeBottom:safeBottom(),safeTop:safeTop(),...extra},gasOrigin);
   }
-  // v1.0.1.206: real native PWA action inside the embedded Player Settings page.
-  // Only positioning data and display status are exchanged, never credentials.
-  const inlinePushNative=$('ppd-inline-push-native');
-  let inlinePushVisible=false, inlinePushSlot=null;
-  function pushInlineStatus(){
-    if(!inlinePushVisible||!authReady||!currentUserId)return;
-    const perm=(!hasApis())?'Unavailable':Notification.permission==='granted'?'Allowed':Notification.permission==='denied'?'Blocked':'Not requested';
-    postToGAS('PPD_PUSH_INLINE_STATUS',{
-      userId:currentUserId,permission:perm,delivery:delivery.textContent,
-      details:details.textContent,action:enable.textContent,actionDisabled:enable.disabled,
-      installed:standalone()
-    });
-  }
-  function positionInlineNative(){
-    if(!inlinePushVisible||!inlinePushSlot||!authReady||document.documentElement.classList.contains('ppd-biometric-locked')){inlinePushNative.hidden=true;return;}
-    const box=iframe.getBoundingClientRect(),r=inlinePushSlot;
-    if(!r.visible||!Number.isFinite(r.left)||!Number.isFinite(r.top)||!Number.isFinite(r.width)||!Number.isFinite(r.height)||r.width<100||r.height<36){inlinePushNative.hidden=true;return;}
-    const left=box.left+r.left,top=box.top+r.top;
-    if(left<box.left-1||top<box.top-1||left+r.width>box.right+1||top+r.height>box.bottom+1){inlinePushNative.hidden=true;return;}
-    /* v1.0.1.210: while the slot is moving (scrolling) hide the overlay; the Apps Script slot looks identical, so nothing shakes. Overlay returns when the position is stable. */
-    const key=Math.round(left)+','+Math.round(top);
-    if(key!==inlinePushNative._k){inlinePushNative._k=key;inlinePushNative.style.opacity='0';inlinePushNative.style.pointerEvents='none';
-      clearTimeout(inlinePushNative._t);inlinePushNative._t=setTimeout(()=>{inlinePushNative.style.opacity='1';inlinePushNative.style.pointerEvents='auto';},170);}
-    inlinePushNative.style.left=Math.round(left)+'px';inlinePushNative.style.top=Math.round(top)+'px';
-    inlinePushNative.style.width=Math.round(r.width)+'px';inlinePushNative.style.height=Math.round(r.height)+'px';
-    inlinePushNative.disabled=enable.disabled;
-    inlinePushNative.textContent=enable.textContent;
-    inlinePushNative.hidden=false;
-  }
-  inlinePushNative.addEventListener('click',()=>{
-    // Direct click on the GitHub PWA origin preserves iOS notification user gesture.
-    if(!inlinePushVisible||!authReady||inlinePushNative.disabled||document.documentElement.classList.contains('ppd-biometric-locked'))return;
-    setDetails('Checking device permission and registration...');pushInlineStatus();
-    requestPermissionAndRegister();
-  });
-  window.addEventListener('resize',positionInlineNative);
-  window.addEventListener('orientationchange',positionInlineNative);
   function pwaInfoPayload(){
     let lastSuccessfulUpdate='';
     try{lastSuccessfulUpdate=localStorage.getItem(PWA_LAST_UPDATE_KEY)||'';}catch(_){}
@@ -451,7 +446,6 @@
     if(gasWindow&&gasOrigin)postToGAS('PPD_AUTH_QUERY');
   }
   iframe.addEventListener('load',()=>{
-    inlinePushVisible=false;inlinePushSlot=null;inlinePushNative.hidden=true;
     bridgeProbeCount=0;
     // An iframe document navigation needs its own server-confirmed auth handshake.
     if(startupResolved){
@@ -483,12 +477,6 @@
   function showRegistrationPrompt(userId,message){
     const id=String(userId||'');
     if(!authReady||!id||id!==currentUserId||!hasApis()||Notification.permission!=='granted'||(isIOS&&!standalone()))return;
-    // When the inline Player Settings page is open, NEVER open the original
-    // PWA registration popup. The same registration happens inside that page.
-    if(inlinePushVisible){
-      setDetails(message||'Notifications are allowed. Register this device below to finish connecting your account.');
-      refreshUI(true);pushInlineStatus();return;
-    }
     if(registrationPromptShownForUser===id)return;
     registrationPromptShownForUser=id;
     setRegistrationDialogMode(true);
@@ -538,7 +526,6 @@
       else setDetails('Enable notifications on this device. Golden Bell remains unchanged.');
     }
     sendPwaInfo();
-    pushInlineStatus();positionInlineNative();
   }
   async function registerDevice(force=false){
     if(!hasApis() || Notification.permission!=='granted')return;
@@ -566,41 +553,10 @@
     if(gasWindow && event.source!==gasWindow)return;
     if(!gasWindow){gasWindow=event.source;gasOrigin=event.origin;}
     const d=event.data;
-    if(d.type==='PPD_PUSH_INLINE_VIEW'){
-      inlinePushVisible=!!(d.visible&&authReady&&currentUserId&&String(d.userId||'')===currentUserId);
-      if(!inlinePushVisible){inlinePushSlot=null;inlinePushNative.hidden=true;}
-      else{refreshUI();if(hasApis()&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);}
-      positionInlineNative();pushInlineStatus();return;
-    }else if(d.type==='PPD_PUSH_INLINE_SLOT'){
-      if(inlinePushVisible&&authReady&&String(d.userId||'')===currentUserId){
-        const r=d.rect||{};
-        inlinePushSlot={visible:d.visible===true,left:Number(r.left),top:Number(r.top),width:Number(r.width),height:Number(r.height)};
-        positionInlineNative();
-      }return;
-    }else if(d.type==='PPD_PUSH_INLINE_STATUS_REQUEST'){
-      if(inlinePushVisible&&authReady&&String(d.userId||'')===currentUserId){refreshUI();if(hasApis()&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);}
-      return;
-    }else if(d.type==='PPD_PUSH_INLINE_ACTION'){
-      if(!inlinePushVisible||!authReady||!currentUserId||String(d.userId||'')!==currentUserId)return;
-      if(d.action==='real-test'){
-        if(!(deviceRegistered&&pushReady)){
-          postToGAS('PPD_PUSH_INLINE_RESULT',{userId:currentUserId,ok:false,message:'Register and connect this device before testing real push.'});return;
-        }
-        postToGAS('PPD_PUSH_TEST');setDetails('Requesting real push test from the authenticated booking app...');pushInlineStatus();
-      }else if(d.action==='local-test'){
-        testLocal.click();
-      }
-      return;
-    }
     if(d.type==='PPD_SPLASH_METADATA'){
        applySplashMetadata(d,true);
        postToGAS('PPD_SPLASH_METADATA_ACK');
        return;
-    }else if(d.type==='PPD_APP_PAINTED'){
-      if(authRestoring||d.ready!==true)return;
-      appPainted=true;
-      if(paintTimer){clearTimeout(paintTimer);paintTimer=null;completeStartup();bioPresent();}
-      return;
     }else if(d.type==='PPD_SESSION_REQUEST'){
       const saved=savedSession();
       postToGAS('PPD_SESSION_RECOVER',{token:saved?saved.token:''});
@@ -616,14 +572,6 @@
         if(!currentUserId||currentUserId===userId)applyDisplayPreference(preference);
       }
       return;
-    }else if(d.type==='PPD_INAPP_NOTIFICATION_OPEN'){
-      // In-app bell actions own their modal; a legacy push URL must not hijack
-      // the current page after another auth handshake or focus event.
-      pendingLegacyPage=null;
-      const u=new URL(location.href);if(u.searchParams.has('ppdpage')){
-        u.searchParams.delete('ppdpage');history.replaceState(history.state,'',u.pathname+u.search+u.hash);
-      }
-      return;
     }else if(d.type==='PPD_OPEN_NOTIFICATIONS'){
        setRegistrationDialogMode(false);
        requestAuthResync();
@@ -632,6 +580,13 @@
        return;
     }else if(d.type==='PPD_AUTH_READY'){
        applySplashMetadata({developerName:d.developerName,appVersion:d.appVersion},true);
+       if(typeof d.logoUrl==='string' && $('pwa-splash-logo')){
+         const candidate=d.logoUrl.trim();
+         if(/^https:\/\//i.test(candidate) || /^data:image\/(?:png|jpeg|webp);base64,/i.test(candidate)){
+           $('pwa-splash-logo').src=candidate;
+           try{localStorage.setItem('ppd_public_brand_logo',candidate.length<8000?candidate:'');}catch(_){/* optional public metadata */}
+         }
+       }
       postToGAS('PPD_AUTH_ACK');
       authRestoring=!!d.restoring;
       if(authRestoring){
@@ -648,8 +603,8 @@
         bioUnlockGranted=!!(bioUnlockedForUser&&bioUnlockedForUser===currentUserId);
         deviceRegistered=false;pushReady=false;registrationPromptShownForUser='';registrationCheckPendingUser='';
       }
-      if(!authReady){deviceRegistered=false;pushReady=false;registrationCheckPendingUser='';registrationPromptShownForUser='';inlinePushVisible=false;inlinePushSlot=null;inlinePushNative.hidden=true;}
-      completeStartupWhenPainted();bioPresent();sendPwaInfo();
+      if(!authReady){deviceRegistered=false;pushReady=false;registrationCheckPendingUser='';registrationPromptShownForUser='';}
+      completeStartup();bioPresent();sendPwaInfo();
       if(authReady&&(!wasAuthenticated||previousUser!==currentUserId)){
         registrationPromptShownForUser='';
         if('Notification' in window&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);
@@ -665,7 +620,7 @@
     }else if(d.type==='PPD_BIO_SESSION_GONE'){
       // Expired GAS session requires password. Wait for GAS to finish loading the
       // public page before removing our startup shield; keep the opt-in preference.
-      authReady=false;currentUserId='';bioUnlockedForUser='';bioUnlockGranted=true;inlinePushVisible=false;inlinePushSlot=null;inlinePushNative.hidden=true;
+      authReady=false;currentUserId='';bioUnlockedForUser='';bioUnlockGranted=true;
       registrationCheckPendingUser='';registrationPromptShownForUser='';deviceRegistered=false;pushReady=false;
       clearSavedSession();
       displayStartup('Your saved session expired. Opening sign-in\u2026');bioPresent();
@@ -683,7 +638,6 @@
         setDetails('Device registration error: '+String(d.error||'Please sign in again.'));
       }
     }else if(d.type==='PPD_TEST_RESULT'){
-      if(inlinePushVisible)postToGAS('PPD_PUSH_INLINE_RESULT',{userId:currentUserId,ok:!!d.ok,message:d.ok?'Real push test queued via GitHub Actions.':'Real push test failed: '+String(d.error||'Unknown error')});
       setDetails(d.ok?'Real Push queued. It may take time for GitHub Actions to execute; lock screen delivery is not yet guaranteed.':'Real push test failed: '+String(d.error||'Unknown error'));
     }else if(d.type==='PPD_STATUS_RESULT'){
       if(d.registrationCheck===true&&authReady&&String(d.registrationCheckUserId||'')===currentUserId&&registrationCheckPendingUser===currentUserId){
@@ -705,9 +659,9 @@
   dialog.addEventListener('click',e=>{if(e.target===dialog)dialog.close();});
   enable.addEventListener('click',()=>{requestAuthResync();requestPermissionAndRegister();});
   testLocal.addEventListener('click',async()=>{
-    if(!hasApis()||Notification.permission!=='granted'){if(inlinePushVisible)postToGAS('PPD_PUSH_INLINE_RESULT',{userId:currentUserId,ok:false,message:'Allow notifications on this device before testing.'});return;}
-    try{const r=await ensureSW();await r.showNotification('Point Pedro Indoor Court',{body:'Local test only \u2014 not a booking notification.',icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:'ppd-local-test',data:{url:new URL('./',location.href).href}});setDetails('Local test notification shown; this is not an end-to-end push test.');if(inlinePushVisible)postToGAS('PPD_PUSH_INLINE_RESULT',{userId:currentUserId,ok:true,message:'Local test notification shown.'});}
-    catch(e){setDetails('Local test failed: '+String(e.message||e));if(inlinePushVisible)postToGAS('PPD_PUSH_INLINE_RESULT',{userId:currentUserId,ok:false,message:'Local test failed: '+String(e.message||e).slice(0,120)});}
+    if(Notification.permission!=='granted')return;
+    try{const r=await ensureSW();await r.showNotification('Point Pedro Indoor Court',{body:'Local test only \u2014 not a booking notification.',icon:'./icons/icon-192.png',badge:'./icons/icon-192.png',tag:'ppd-local-test',data:{url:new URL('./',location.href).href}});setDetails('Local test notification shown; this is not an end-to-end push test.');}
+    catch(e){setDetails('Local test failed: '+String(e.message||e));}
   });
   testReal.addEventListener('click',()=>{postToGAS('PPD_PUSH_TEST');setDetails('Requesting a real Push test from the authenticated booking app\u2026');});
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;install.hidden=false;});
@@ -715,51 +669,16 @@
     if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;install.hidden=true;}
     else if(isIOS){$('ios-install-tip').hidden=false;}
   });
-  window.addEventListener('appinstalled',()=>{install.hidden=true;deferredInstall=null;sendPwaInfo();pushInlineStatus();});
+  window.addEventListener('appinstalled',()=>{install.hidden=true;deferredInstall=null;});
   window.addEventListener('online',()=>{$('offline-note').hidden=true;sendPwaInfo();});
   window.addEventListener('offline',()=>{$('offline-note').hidden=false;sendPwaInfo();});
   $('offline-note').hidden=navigator.onLine;
   if(new URLSearchParams(location.search).get('notifications')==='1'){
     setTimeout(()=>{refreshUI();dialog.showModal();},350);
   }
-  // An in-app notification should never cause a page route change. Background
-  // push clicks are forwarded by record reference to the existing GAS modal.
-  // For older installed notifications, honor legacy ppdpage ONCE at sign-in.
-  const launchParams=new URLSearchParams(location.search);
-  let pendingDirectPush=null;
-  function sanitizedPushRecord(ref,kind){
-    const relatedId=String(ref||''),eventType=String(kind||'').toUpperCase();
-    return /^[A-Za-z0-9_-]{4,100}$/.test(relatedId)&&/^[A-Z0-9_]{2,70}$/.test(eventType)
-      ?{relatedId,eventType}:null;
-  }
-  pendingDirectPush=sanitizedPushRecord(launchParams.get('ppdref'),launchParams.get('ppdtype'));
-  let pendingLegacyPage=pendingDirectPush?null:launchParams.get('ppdpage');
-  function consumeNotificationLaunch(){
-    if(!authReady||!gasWindow||!gasOrigin)return;
-    if(pendingDirectPush){
-      const item=pendingDirectPush;pendingDirectPush=null;
-      postToGAS('PPD_PUSH_OPEN_NOTIFICATION',item);
-      const u=new URL(location.href);u.searchParams.delete('ppdref');u.searchParams.delete('ppdtype');
-      u.searchParams.delete('ppdpage');history.replaceState(history.state,'',u.pathname+u.search+u.hash);
-    }else if(pendingLegacyPage){
-      const page=pendingLegacyPage;pendingLegacyPage=null;
-      if(['home','book','bookings','users'].includes(page))postToGAS('PPD_PUSH_NAVIGATE',{page});
-      const u=new URL(location.href);u.searchParams.delete('ppdpage');
-      history.replaceState(history.state,'',u.pathname+u.search+u.hash);
-    }
-  }
-  navigator.serviceWorker?.addEventListener('message',e=>{
-    const d=e.data;
-    if(d?.type==='PPD_PUSH_OPEN_RECORD'){
-      const item=sanitizedPushRecord(d.relatedId,d.eventType);
-      if(!item)return;
-      pendingLegacyPage=null;pendingDirectPush=item;consumeNotificationLaunch();
-    }
-  });
-  window.addEventListener('message',e=>{
-    if(e.source===gasWindow&&isGASOrigin(e.origin)&&e.data?.type==='PPD_AUTH_READY')
-      setTimeout(consumeNotificationLaunch,500);
-  });
+  const navPage=new URLSearchParams(location.search).get('ppdpage');
+  function forwardNavigation(){if(authReady&&navPage)postToGAS('PPD_PUSH_NAVIGATE',{page:navPage});}
+  window.addEventListener('message',e=>{if(e.source===gasWindow&&isGASOrigin(e.origin)&&e.data?.type==='PPD_AUTH_READY')setTimeout(forwardNavigation,500);});
   navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='PPD_PUSH_RECEIVED'&&authReady)postToGAS('PPD_PUSH_STATUS');});
   fetch('./push-config.json',{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(async config=>{
     vapidKey=String(config.vapidPublicKey||'').trim();if(!/^[A-Za-z0-9_-]{80,100}$/.test(vapidKey))vapidKey='';
