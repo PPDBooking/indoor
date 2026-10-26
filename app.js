@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.1.218: iOS standalone full-bleed viewport correction; Android layout unchanged. */
+/* GitHub Pages PWA wrapper v1.0.1.219: iOS native-bottom viewport coverage; Android layout unchanged. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.218';
-  const PWA_BUILD_NUMBER='218';
+  const PWA_VERSION='1.0.1.219';
+  const PWA_BUILD_NUMBER='219';
   const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -69,7 +69,21 @@
       const keyboardOpen=reference-(height+top)>Math.max(150,reference*.2);
       if(!keyboardOpen){
         iosUnobstructedHeight=Math.max(iosUnobstructedHeight,layoutHeight,height+top);
-        root.style.setProperty('--ppd-visible-height','100dvh');
+        // Installed iOS WebKit may expose a dynamic CSS viewport that ends
+        // above the native Home Indicator backing. Measure the discrepancy on
+        // this device instead of assuming a fixed iPhone model or extra padding.
+        // Only a small, plausible native-bottom difference is compensated;
+        // a large difference means a resized/split-screen viewport, not a bar.
+        const cssHeight=layoutHeight;
+        const landscape=window.innerWidth>window.innerHeight;
+        const screenSize=window.screen;
+        const edgeHeight=screenSize&&Number.isFinite(screenSize.height)&&Number.isFinite(screenSize.width)
+          ?(landscape?Math.min(screenSize.height,screenSize.width):Math.max(screenSize.height,screenSize.width)):0;
+        const missingBottom=edgeHeight-cssHeight;
+        const limit=Math.min(96,edgeHeight*.18);
+        const bottomBleed=missingBottom>8&&missingBottom<=limit?Math.round(missingBottom):0;
+        root.style.setProperty('--ppd-visible-height',bottomBleed
+          ?`calc(100dvh + ${bottomBleed}px)`:'100dvh');
         root.style.setProperty('--ppd-visible-top','0px');
         return;
       }
