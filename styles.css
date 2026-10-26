@@ -134,12 +134,8 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 
 /* v1.0.1.209: status-bar-style is black-translucent: the page runs under the clock / Dynamic Island.
    Splash artwork is full-bleed to the very top (nothing else is mixed in); inside the app the glass header draws the status area itself. */
-html:has(#startup-screen:not([hidden])),html:has(#startup-screen:not([hidden])) body{background-color:#013d27}
+html:has(#startup-screen:not([hidden])),html:has(#startup-screen:not([hidden])) body{background-color:#012e20}
 @media (max-width:900px){
   #startup-screen .ppdSplashInterior{padding-top:calc(env(safe-area-inset-top,0px) + clamp(8px,1.3dvh,18px))}
 }
 
-/* v1.0.1.209: remove the bottom strip. --ppd-h is the real screen height when iOS reports a shorter layout viewport. */
-@media (max-width:900px){
-  html,body,.app-shell,#startup-screen{height:var(--ppd-h,100%)!important;bottom:auto!important}
-}
