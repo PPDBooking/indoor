@@ -132,7 +132,9 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
   .app-shell,#startup-screen{position:absolute!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:100%!important;min-height:0!important;max-width:none}
 }
 
-/* v1.0.1.209: the strip behind the clock / Dynamic Island is black (status-bar-style "black"); no green anywhere outside the splash artwork. */
-html{background-color:#000}
-@media (max-width:900px){html,body{background-color:#000!important}.app-shell{background:#f3f6f8}}
-html:has(#startup-screen:not([hidden])),html:has(#startup-screen:not([hidden])) body{background-color:#000!important}
+/* v1.0.1.209: status-bar-style is black-translucent: the page runs under the clock / Dynamic Island.
+   Splash artwork is full-bleed to the very top (nothing else is mixed in); inside the app the glass header draws the status area itself. */
+html:has(#startup-screen:not([hidden])),html:has(#startup-screen:not([hidden])) body{background-color:#013d27}
+@media (max-width:900px){
+  #startup-screen .ppdSplashInterior{padding-top:calc(env(safe-area-inset-top,0px) + clamp(8px,1.3dvh,18px))}
+}
