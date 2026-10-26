@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.1.215: status-area background follows active splash/home state. */
+/* GitHub Pages PWA wrapper v1.0.1.216: status-area background follows active splash/home state. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.215';
-  const PWA_BUILD_NUMBER='215';
+  const PWA_VERSION='1.0.1.216';
+  const PWA_BUILD_NUMBER='216';
   const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
