@@ -20,50 +20,8 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   document.documentElement.classList.toggle('ppd-standalone',standalone());
   document.documentElement.classList.toggle('ppd-ios',isIOS);
-  /* v1.0.1.205: full-height fix for iOS standalone. Uses screen.height only, never innerHeight, so it cannot oscillate. */
-  function applyFullHeight(){
-    const root=document.documentElement;
-    try{
-      const portrait=window.innerHeight>window.innerWidth;
-      let full=screen.height||0;
-      /* v1.0.1.208 diagnostics: X1 uses innerHeight, X2 uses visualViewport height, X3/X4 drop the forced height (CSS locks the page). */
-      if(root.classList.contains('ppd-x1'))full=window.innerHeight||0;
-      else if(root.classList.contains('ppd-x2'))full=Math.round((window.visualViewport&&window.visualViewport.height)||window.innerHeight||0);
-      const noForce=root.classList.contains('ppd-x3')||root.classList.contains('ppd-x4');
-      if(!noForce&&isIOS&&standalone()&&portrait&&full>=500&&full<=1400)root.style.setProperty('--ppd-full',full+'px');
-      else root.style.removeProperty('--ppd-full');
-    }catch(_){root.style.removeProperty('--ppd-full');}
-  }
-  applyFullHeight();
-  ['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(applyFullHeight,80)));
-  /* v1.0.1.208: debug panel is ON for the first 5 minutes in the installed app (set DEBUG_STANDALONE_SECONDS to 0 to turn it off again) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
-  (function(){
-    const DEBUG_STANDALONE_SECONDS=300;
-    const forced=/[?&]ppddebug=1/.test(location.search);
-    if(!(forced||(DEBUG_STANDALONE_SECONDS>0&&standalone())))return;
-    const root=document.documentElement;
-    const setFull=applyFullHeight;
-    const wrap=document.createElement('div');
-    wrap.setAttribute('data-ppd-debug','1');wrap.style.cssText='position:fixed;z-index:2147483647;left:6px;top:70px;font:11px/1.35 monospace;color:#7dffb0;background:#000c;border-radius:8px;padding:6px 8px;max-width:78vw';
-    const pre=document.createElement('pre');pre.style.cssText='margin:0 0 6px;white-space:pre;pointer-events:none';
-    const row=document.createElement('div');row.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
-    wrap.appendChild(pre);wrap.appendChild(row);root.appendChild(wrap);
-    const probe=document.createElement('div');
-    probe.setAttribute('data-ppd-debug','1');probe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
-    root.appendChild(probe);
-    let current='off';
-    const show=()=>{setFull();const cs=getComputedStyle(probe),vv=window.visualViewport;
-      pre.textContent=['variant '+current,'screen '+screen.width+'x'+screen.height,'inner '+innerWidth+'x'+innerHeight,'visual '+(vv?Math.round(vv.width)+'x'+Math.round(vv.height):'n/a'),'docEl '+root.clientHeight+' scrollH '+root.scrollHeight+' scrollY '+Math.round(window.pageYOffset||0),'shell '+Math.round((document.querySelector('.app-shell')||root).getBoundingClientRect().height)+' top '+Math.round((document.querySelector('.app-shell')||root).getBoundingClientRect().top),'X1 inner | X2 visual | X3 lock | X4 lock+dvh','inset top '+cs.paddingTop+' bottom '+cs.paddingBottom,'standalone '+standalone()].join('\n');};
-    ['off','x1','x2','x3','x4'].forEach(v=>{
-      const b=document.createElement('button');b.type='button';b.textContent=v==='off'?'Off':v.toUpperCase();
-      b.style.cssText='min-width:44px;min-height:34px;border-radius:7px;border:1px solid #7dffb0;background:#06301f;color:#fff;font:12px monospace';
-      b.addEventListener('click',()=>{['x1','x2','x3','x4'].forEach(k=>root.classList.remove('ppd-'+k));if(v!=='off')root.classList.add('ppd-'+v);current=v;show();});
-      row.appendChild(b);
-    });
-    show();['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(show,80)));
-    const timer=setInterval(show,1500);
-    if(!forced)setTimeout(()=>{clearInterval(timer);wrap.remove();probe.remove();},DEBUG_STANDALONE_SECONDS*1000);
-  })();
+  /* v1.0.1.208: page height is locked by CSS (fixed, 100%); no JS height forcing and no test panel. */
+  document.documentElement.style.removeProperty('--ppd-full');
   const hasApis = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window) && window.isSecureContext;
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
   let gasWindow = null, gasOrigin = '', currentUserId = '';

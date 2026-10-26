@@ -116,15 +116,6 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 @media(prefers-reduced-motion:reduce){.startup-screen{transition:none}}
 
 
-/* v1.0.1.190: iOS standalone reports a layout viewport 62px shorter than the screen.
-   Phones therefore use a normal-flow html/body with an explicit full height (--ppd-full, set once in app.js);
-   the shell and splash are absolutely positioned inside it. No fixed/overflow clipping involved. */
-@media (max-width:900px){
-  html,body{position:static!important;overflow:visible!important;height:var(--ppd-full,100%)!important;min-height:var(--ppd-full,100%)!important;width:100%;margin:0;background:#f3f6f8}
-  html{position:relative!important}
-  .app-shell,#startup-screen{position:absolute!important;top:0!important;left:0!important;right:auto!important;bottom:auto!important;width:100%!important;height:var(--ppd-full,100%)!important;min-height:0!important}
-}
-
 /* v1.0.1.206 — native-origin, in-page Player Settings Pushbell button. */
 #ppd-inline-push-native{position:fixed;z-index:17;min-height:44px;max-height:60px;min-width:0;border:1px solid #27825d;border-radius:11px;background:#087f5b;color:#fff;font:700 13px/1.35 system-ui,-apple-system,sans-serif;padding:8px 12px;text-align:center;white-space:normal;box-shadow:0 2px 8px #134c3220;touch-action:manipulation;}
 #ppd-inline-push-native:disabled{background:#e4ece8;border-color:#cbd8d1;color:#51675c;opacity:1;}
@@ -134,10 +125,9 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 .ppdSplashCredit b:empty::before{content:"\00a0";}
 .ppdSplashCredit b{min-height:1.25em;}
 
-/* v1.0.1.208: live layout experiments for the on-screen test panel (installed iPhone app only). */
+/* v1.0.1.208: FINAL layout (was test variant X3). On phones the page is locked to the real visible viewport (fixed, 100%, no scrolling),
+   so the top and bottom bars can never slide up/down. The old forced screen.height (62px taller than the visible area) is gone. */
 @media (max-width:900px){
-  html.ppd-x3,html.ppd-x3 body{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;overscroll-behavior:none}
-  html.ppd-x3 .app-shell,html.ppd-x3 #startup-screen{position:absolute!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:100%!important}
-  html.ppd-x4,html.ppd-x4 body{position:fixed!important;top:0!important;left:0!important;right:0!important;width:100%!important;height:100dvh!important;min-height:0!important;overflow:hidden!important;overscroll-behavior:none}
-  html.ppd-x4 .app-shell,html.ppd-x4 #startup-screen{position:absolute!important;top:0!important;left:0!important;width:100%!important;height:100dvh!important}
+  html,body{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:100%!important;min-height:0!important;margin:0;overflow:hidden!important;overscroll-behavior:none;background:#f3f6f8}
+  .app-shell,#startup-screen{position:absolute!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:100%!important;min-height:0!important;max-width:none}
 }
