@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.1.219: iOS native-bottom viewport coverage; Android layout unchanged. */
+/* GitHub Pages PWA wrapper v1.0.1.220: canonical iOS viewport, no bottom bleed. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.219';
-  const PWA_BUILD_NUMBER='219';
+  const PWA_VERSION='1.0.1.220';
+  const PWA_BUILD_NUMBER='220';
   const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -29,14 +29,12 @@
       themeColorMeta.content=splashActive?'#075b43':'#f3f6f8';
   }
   setIOSSystemBackdrop(true);
-  // The installed iPhone viewport may report a visualViewport shorter than
-  // the *layout* viewport even with the keyboard closed (native status/home
-  // indicator insets). Using that smaller value for the shell left an unpainted
-  // strip under the splash and a different-coloured strip below the booking UI.
-  // A normal iOS standalone page instead occupies the full CSS dynamic viewport;
-  // only the OPEN KEYBOARD is allowed to shrink the shell. Do not add safe-area
-  // padding here: the booking app owns its 16px default dock gap and optional
-  // Mobile Safe Area adjustment. Other platforms retain their v217 behaviour.
+  // The booking iframe and splash share one CSS viewport. iOS may report a
+  // smaller visualViewport even while the keyboard is closed, because it
+  // excludes native system-bar space. Never add a physical screen-height
+  // difference to the shell: that can extend content behind Home Indicator.
+  // Only reduce the viewport when a genuine on-screen keyboard is open.
+  // Android and browser (non-standalone) handling remains as in v217/v219.
   const mobileViewportQuery=window.matchMedia('(max-width: 900px)');
   let visibleViewportFrame=0, iosUnobstructedHeight=0, iosViewportOrientation='';
   function syncVisibleViewport(){
@@ -53,7 +51,6 @@
     const top=viewport&&Number.isFinite(viewport.offsetTop)
       ?Math.max(0,viewport.offsetTop):0;
     if(isIOS&&standalone()){
-      // Use measured CSS sizes; physical screen.height is never involved.
       const orientation=window.screen.orientation?.type||
         (typeof window.orientation==='number'?(Math.abs(window.orientation)%180===90?'landscape':'portrait'):
           (window.innerWidth>window.innerHeight?'landscape':'portrait'));
@@ -62,34 +59,18 @@
         iosViewportOrientation=orientation;
         iosUnobstructedHeight=Math.max(layoutHeight,height+top);
       }
-      // A substantial loss of visual height indicates a keyboard, not the
-      // normal 20-60px difference caused by iOS system bars. Preserve the last
-      // unobstructed measurement while the keyboard is visible.
       const reference=Math.max(iosUnobstructedHeight,layoutHeight);
       const keyboardOpen=reference-(height+top)>Math.max(150,reference*.2);
       if(!keyboardOpen){
-        iosUnobstructedHeight=Math.max(iosUnobstructedHeight,layoutHeight,height+top);
-        // Installed iOS WebKit may expose a dynamic CSS viewport that ends
-        // above the native Home Indicator backing. Measure the discrepancy on
-        // this device instead of assuming a fixed iPhone model or extra padding.
-        // Only a small, plausible native-bottom difference is compensated;
-        // a large difference means a resized/split-screen viewport, not a bar.
-        const cssHeight=layoutHeight;
-        const landscape=window.innerWidth>window.innerHeight;
-        const screenSize=window.screen;
-        const edgeHeight=screenSize&&Number.isFinite(screenSize.height)&&Number.isFinite(screenSize.width)
-          ?(landscape?Math.min(screenSize.height,screenSize.width):Math.max(screenSize.height,screenSize.width)):0;
-        const missingBottom=edgeHeight-cssHeight;
-        const limit=Math.min(96,edgeHeight*.18);
-        const bottomBleed=missingBottom>8&&missingBottom<=limit?Math.round(missingBottom):0;
-        root.style.setProperty('--ppd-visible-height',bottomBleed
-          ?`calc(100dvh + ${bottomBleed}px)`:'100dvh');
-        root.style.setProperty('--ppd-visible-top','0px');
+        iosUnobstructedHeight=Math.max(reference,height+top);
+        // Let the single stylesheet rule provide exactly 100dvh, with no
+        // screen.height correction and no extra home-indicator padding.
+        root.style.removeProperty('--ppd-visible-height');
+        root.style.removeProperty('--ppd-visible-top');
         return;
       }
     }
-    // Keep the previous v217 visible-viewport resizing for an open keyboard
-    // and for all Android / non-standalone devices.
+    // Open iOS keyboard and non-iOS device behaviour already used in v217.
     root.style.setProperty('--ppd-visible-height',Math.round(height)+'px');
     root.style.setProperty('--ppd-visible-top',Math.round(top)+'px');
   }

@@ -49,35 +49,36 @@
     @media (min-width:701px){#startup-screen .ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.213")}}
     #startup-screen.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
     #startup-screen .ppdSplashInterior{position:relative;z-index:1}
-    /* Keep the splash artwork and credits within one full-screen overlay, with
-       no extra safe-area backdrop left beneath the image. */
+    /* Paint iOS native screen edges with the same approved splash artwork.
+       Geometry and height live in the single styles.css viewport rule. */
     @media (max-width:700px){
-      html.ppd-splash-active,
-      html.ppd-splash-active body{
+      html.ppd-splash-active,html.ppd-splash-active body{
         background-color:#075b43;
         background-image:url("./assets/ppd-badminton-splash.webp");
         background-position:center center;
         background-size:cover;
         background-repeat:no-repeat;
       }
-      html.ppd-splash-active .app-shell{
+      /* Preserve the original Android splash backing under the overlay. */
+      html.ppd-splash-active:not(.ppd-ios) .app-shell{
         padding-top:0;padding-bottom:0;
         background:#075b43 url("./assets/ppd-badminton-splash.webp") center center / cover no-repeat;
       }
-      /* The fixed overlay already spans the full available viewport. Keep its
-         artwork and credits inside that same box so iOS cannot leave a safe-area strip. */
-      #startup-screen{inset:0;width:100%;height:auto;}
-      #startup-screen .ppdSplashInterior{height:100%;flex:none;}
     }
-    /* v1.0.1.205: splash is a true full-screen fixed layer (no bottom strip). Credits keep clear of the home indicator. */
     @media (max-width:900px){
-      #startup-screen{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:auto;min-height:100%}
-      #startup-screen .ppdSplashInterior{position:absolute;inset:0;height:auto;max-height:none;width:min(100%,660px);margin:0 auto;flex:none;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
+      /* Keep the existing Android splash geometry; iOS removes this minimum
+         in its dedicated viewport rule in styles.css. */
+      #startup-screen{min-height:100%;}
+      #startup-screen .ppdSplashInterior{
+        position:absolute;inset:0;height:100%;max-height:none;
+        width:min(100%,660px);margin:0 auto;flex:none;
+        padding-bottom:calc(14px + env(safe-area-inset-bottom,0px));
+      }
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=1.0.1.219">
+  <link rel="stylesheet" href="./styles.css?v=1.0.1.220">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js?v=1.0.1.219" defer></script>
+  <script src="./app.js?v=1.0.1.220" defer></script>
 </head>
 <body>
   <div class="app-shell">
