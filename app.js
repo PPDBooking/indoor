@@ -4,8 +4,8 @@
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.209';
-  const PWA_BUILD_NUMBER='208';
+  const PWA_VERSION='1.0.1.210';
+  const PWA_BUILD_NUMBER='210';
   const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -20,7 +20,7 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   document.documentElement.classList.toggle('ppd-standalone',standalone());
   document.documentElement.classList.toggle('ppd-ios',isIOS);
-  /* v1.0.1.209: page height is locked by CSS (fixed, 100%); no JS height forcing and no test panel. */
+  /* v1.0.1.210: page height is locked by CSS (fixed, 100%); no JS height forcing and no test panel. */
   document.documentElement.style.removeProperty('--ppd-full');
   const hasApis = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window) && window.isSecureContext;
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
@@ -75,7 +75,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.209':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.210':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -146,7 +146,7 @@
     if(startupTimer){clearTimeout(startupTimer);startupTimer=null;}
     if(paintTimer){clearTimeout(paintTimer);paintTimer=null;}
   };
-  /* v1.0.1.209: the splash stays up until the booking app reports its first painted page (PPD_APP_PAINTED), so no blank white gap appears.
+  /* v1.0.1.210: the splash stays up until the booking app reports its first painted page (PPD_APP_PAINTED), so no blank white gap appears.
      A fallback timer prevents the splash from ever getting stuck. */
   const completeStartupWhenPainted = () => {
     if(appPainted){completeStartup();return;}
@@ -415,7 +415,7 @@
     if(!r.visible||!Number.isFinite(r.left)||!Number.isFinite(r.top)||!Number.isFinite(r.width)||!Number.isFinite(r.height)||r.width<100||r.height<36){inlinePushNative.hidden=true;return;}
     const left=box.left+r.left,top=box.top+r.top;
     if(left<box.left-1||top<box.top-1||left+r.width>box.right+1||top+r.height>box.bottom+1){inlinePushNative.hidden=true;return;}
-    /* v1.0.1.209: while the slot is moving (scrolling) hide the overlay; the Apps Script slot looks identical, so nothing shakes. Overlay returns when the position is stable. */
+    /* v1.0.1.210: while the slot is moving (scrolling) hide the overlay; the Apps Script slot looks identical, so nothing shakes. Overlay returns when the position is stable. */
     const key=Math.round(left)+','+Math.round(top);
     if(key!==inlinePushNative._k){inlinePushNative._k=key;inlinePushNative.style.opacity='0';inlinePushNative.style.pointerEvents='none';
       clearTimeout(inlinePushNative._t);inlinePushNative._t=setTimeout(()=>{inlinePushNative.style.opacity='1';inlinePushNative.style.pointerEvents='auto';},170);}
