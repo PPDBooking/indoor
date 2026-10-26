@@ -138,3 +138,8 @@ html:has(#startup-screen:not([hidden])),html:has(#startup-screen:not([hidden])) 
 @media (max-width:900px){
   #startup-screen .ppdSplashInterior{padding-top:calc(env(safe-area-inset-top,0px) + clamp(8px,1.3dvh,18px))}
 }
+
+/* v1.0.1.209: remove the bottom strip. --ppd-h is the real screen height when iOS reports a shorter layout viewport. */
+@media (max-width:900px){
+  html,body,.app-shell,#startup-screen{height:var(--ppd-h,100%)!important;bottom:auto!important}
+}

@@ -78,6 +78,28 @@
     html:has(#startup-screen:not([hidden])) #update-banner,
     html:has(#startup-screen:not([hidden])) #offline-note{display:none!important}
   </style>
+  <script>
+  /* v1.0.1.209: iOS standalone + black-translucent reports a layout height that is one status-bar shorter than the screen, which leaves a coloured strip at the bottom.
+     When innerHeight + top safe area equals the real screen height, use the real screen height (page stays fixed, no scrolling). */
+  (function(){
+    var root=document.documentElement;
+    function fix(){
+      try{
+        var st=(navigator.standalone===true)||(window.matchMedia&&matchMedia('(display-mode:standalone)').matches);
+        var p=document.createElement('div');p.style.cssText='position:fixed;top:0;left:0;width:0;padding-top:env(safe-area-inset-top,0px);visibility:hidden';
+        root.appendChild(p);var top=parseFloat(getComputedStyle(p).paddingTop)||0;root.removeChild(p);
+        var portrait=window.innerHeight>=window.innerWidth,sh=Math.max(screen.height,screen.width);
+        var gap=sh-window.innerHeight;
+        if(st&&portrait&&top>0&&gap>2&&gap<=top+6)root.style.setProperty('--ppd-h',sh+'px');
+        else root.style.removeProperty('--ppd-h');
+      }catch(_){}
+    }
+    fix();
+    ['resize','orientationchange','pageshow'].forEach(function(e){window.addEventListener(e,function(){fix();setTimeout(fix,250);});});
+    document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(fix,120);});
+    setTimeout(fix,300);setTimeout(fix,1200);
+  })();
+  </script>
   <link rel="stylesheet" href="./styles.css?v=1.0.1.209">
   <title>Point Pedro Indoor Court</title>
   <script src="./app.js?v=1.0.1.209" defer></script>
