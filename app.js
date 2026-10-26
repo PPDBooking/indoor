@@ -415,6 +415,10 @@
     if(!r.visible||!Number.isFinite(r.left)||!Number.isFinite(r.top)||!Number.isFinite(r.width)||!Number.isFinite(r.height)||r.width<100||r.height<36){inlinePushNative.hidden=true;return;}
     const left=box.left+r.left,top=box.top+r.top;
     if(left<box.left-1||top<box.top-1||left+r.width>box.right+1||top+r.height>box.bottom+1){inlinePushNative.hidden=true;return;}
+    /* v1.0.1.209: while the slot is moving (scrolling) hide the overlay; the Apps Script slot looks identical, so nothing shakes. Overlay returns when the position is stable. */
+    const key=Math.round(left)+','+Math.round(top);
+    if(key!==inlinePushNative._k){inlinePushNative._k=key;inlinePushNative.style.opacity='0';inlinePushNative.style.pointerEvents='none';
+      clearTimeout(inlinePushNative._t);inlinePushNative._t=setTimeout(()=>{inlinePushNative.style.opacity='1';inlinePushNative.style.pointerEvents='auto';},170);}
     inlinePushNative.style.left=Math.round(left)+'px';inlinePushNative.style.top=Math.round(top)+'px';
     inlinePushNative.style.width=Math.round(r.width)+'px';inlinePushNative.style.height=Math.round(r.height)+'px';
     inlinePushNative.disabled=enable.disabled;
@@ -595,7 +599,7 @@
        postToGAS('PPD_SPLASH_METADATA_ACK');
        return;
     }else if(d.type==='PPD_APP_PAINTED'){
-      if(authRestoring)return;
+      if(authRestoring||d.ready!==true)return;
       appPainted=true;
       if(paintTimer){clearTimeout(paintTimer);paintTimer=null;completeStartup();bioPresent();}
       return;
