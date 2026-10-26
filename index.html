@@ -6,9 +6,9 @@
   <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
   <link rel="dns-prefetch" href="https://ssl.gstatic.com">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#f3f6f8">
+  <meta name="theme-color" content="#f2f4f6">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="PPD Court">
   <meta name="description" content="Point Pedro Indoor Court booking portal">
   <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -29,14 +29,14 @@
   <link rel="apple-touch-startup-image" href="./assets/startup/startup-750x1334.jpg" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
   <link rel="apple-touch-startup-image" href="./assets/startup/startup-640x1136.jpg" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
   <link rel="preload" as="image" href="./assets/ppd-badminton-splash.webp" fetchpriority="high" media="(max-width: 700px)">
-  <link rel="preload" as="image" href="./assets/ppd-badminton-desktop.webp?v=1.0.1.210" fetchpriority="high" media="(min-width: 701px)">
+  <link rel="preload" as="image" href="./assets/ppd-badminton-desktop.webp?v=1.0.1.211" fetchpriority="high" media="(min-width: 701px)">
   <link rel="preload" as="image" href="./icons/icon-512.png" fetchpriority="high">
   <style>
     /* The original image is the sole splash backdrop, including the mobile root edges. */
     #startup-screen{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;background-color:transparent;background-image:none;color:#fff}
     #startup-screen[hidden]{display:none!important}
     #startup-screen .ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;transition:none;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-    @media (min-width:701px){#startup-screen .ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.210")}}
+    @media (min-width:701px){#startup-screen .ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.211")}}
     #startup-screen.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
     #startup-screen .ppdSplashInterior{position:relative;z-index:1}
     /* Keep the splash artwork and credits within one full-screen overlay, with
@@ -44,7 +44,7 @@
     @media (max-width:700px){
       html:has(#startup-screen:not([hidden])),
       html:has(#startup-screen:not([hidden])) body{
-        background-color:#013d27;
+        background-color:#075b43;
         background-image:url("./assets/ppd-badminton-splash.webp");
         background-position:center center;
         background-size:cover;
@@ -52,7 +52,7 @@
       }
       html:has(#startup-screen:not([hidden])) .app-shell{
         padding-top:0;padding-bottom:0;
-        background:#013d27 url("./assets/ppd-badminton-splash.webp") center center / cover no-repeat;
+        background:#075b43 url("./assets/ppd-badminton-splash.webp") center center / cover no-repeat;
       }
       /* The fixed overlay already spans the full available viewport. Keep its
          artwork and credits inside that same box so iOS cannot leave a safe-area strip. */
@@ -64,49 +64,10 @@
       #startup-screen{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:auto;min-height:100%}
       #startup-screen .ppdSplashInterior{position:absolute;inset:0;height:auto;max-height:none;width:min(100%,660px);margin:0 auto;flex:none;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
     }
-    /* v1.0.1.210: iPhone paints the strip behind the clock/battery (outside the page) with the BODY background colour and cannot show an image there.
-       So that colour is the artwork's own dark top-edge green (#013d27), set from the very first paint, and the artwork fades into it (no green band, no seam). */
-    html{background-color:#013d27}
-    @media (max-width:900px){
-      html:has(#startup-screen:not([hidden])),
-      html:has(#startup-screen:not([hidden])) body{background-color:#013d27}
-      html:has(#startup-screen:not([hidden])) .app-shell{background:#013d27 url("./assets/ppd-badminton-splash.webp") center center / cover no-repeat}
-    }
-    html:has(#startup-screen:not([hidden])) [data-ppd-debug],
-    html:has(#startup-screen:not([hidden])) #notification-settings-button,
-    html:has(#startup-screen:not([hidden])) #ppd-inline-push-native,
-    html:has(#startup-screen:not([hidden])) #update-banner,
-    html:has(#startup-screen:not([hidden])) #offline-note{display:none!important}
   </style>
-  <script>
-  /* iOS standalone: the usable viewport can exclude one system-ui inset.
-     Fill that inset when its difference is small, even if Safari reports env(safe-area-inset-top) as zero.
-     Do not recalculate the shell to the keyboard-shrunken height while a text field is focused. */
-  (function(){
-    var root=document.documentElement;
-    function fix(){
-      try{
-        var installed=(navigator.standalone===true)||(window.matchMedia&&matchMedia('(display-mode:standalone)').matches);
-        var portrait=window.innerHeight>=window.innerWidth;
-        var realHeight=Math.max(screen.height,screen.width);
-        var gap=realHeight-window.innerHeight;
-        if(installed&&portrait&&gap>2&&gap<=120){
-          root.style.setProperty('--ppd-h',realHeight+'px');
-        }else if(!installed||!portrait||gap<=2){
-          root.style.removeProperty('--ppd-h');
-        }
-        /* Large temporary gaps (e.g. a keyboard) retain the last stable height. */
-      }catch(_){}
-    }
-    fix();
-    ['resize','orientationchange','pageshow'].forEach(function(e){window.addEventListener(e,function(){fix();setTimeout(fix,250);});});
-    document.addEventListener('visibilitychange',function(){if(!document.hidden)setTimeout(fix,120);});
-    setTimeout(fix,300);setTimeout(fix,1200);
-  })();
-  </script>
-  <link rel="stylesheet" href="./styles.css?v=1.0.1.210">
+  <link rel="stylesheet" href="./styles.css?v=1.0.1.211">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js?v=1.0.1.210" defer></script>
+  <script src="./app.js?v=1.0.1.211" defer></script>
 </head>
 <body>
   <div class="app-shell">

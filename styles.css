@@ -66,7 +66,7 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 /* Approved badminton artwork only: no gradient overlay or decorative artwork layer. */
 .ppdSplashNew{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;background-color:transparent;background-image:none;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;transition:opacity .4s ease}
 .ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;transition:none;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.210");background-position:center center;background-size:cover}}
+@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.211");background-position:center center;background-size:cover}}
 .ppdSplashNew.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
 .ppdSplashNew.splash-leaving,.ppdSplashNew.ppdSplashLeaving{opacity:0;pointer-events:none}
 
@@ -121,25 +121,11 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 #ppd-inline-push-native:disabled{background:#e4ece8;border-color:#cbd8d1;color:#51675c;opacity:1;}
 #ppd-inline-push-native[hidden]{display:none!important;}
 
-/* v1.0.1.210: reserve the splash "Version" line so the footer never jumps when the number arrives. */
-.ppdSplashCredit b:empty::before{content:"\00a0";}
-.ppdSplashCredit b{min-height:1.25em;}
-
-/* v1.0.1.210: FINAL layout (was test variant X3). On phones the page is locked to the real visible viewport (fixed, 100%, no scrolling),
-   so the top and bottom bars can never slide up/down. The old forced screen.height (62px taller than the visible area) is gone. */
+/* v1.0.1.190: iOS standalone reports a layout viewport 62px shorter than the screen.
+   Phones therefore use a normal-flow html/body with an explicit full height (--ppd-full, set once in app.js);
+   the shell and splash are absolutely positioned inside it. No fixed/overflow clipping involved. */
 @media (max-width:900px){
-  html,body{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:100%!important;min-height:0!important;margin:0;overflow:hidden!important;overscroll-behavior:none;background:#f3f6f8}
-  .app-shell,#startup-screen{position:absolute!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:100%!important;min-height:0!important;max-width:none}
-}
-
-/* v1.0.1.210: status-bar-style is black-translucent: the page runs under the clock / Dynamic Island.
-   Splash artwork is full-bleed to the very top (nothing else is mixed in); inside the app the glass header draws the status area itself. */
-html:has(#startup-screen:not([hidden])),html:has(#startup-screen:not([hidden])) body{background-color:#013d27}
-@media (max-width:900px){
-  #startup-screen .ppdSplashInterior{padding-top:calc(env(safe-area-inset-top,0px) + clamp(8px,1.3dvh,18px))}
-}
-
-/* v1.0.1.210: remove the bottom strip. --ppd-h is the real screen height when iOS reports a shorter layout viewport. */
-@media (max-width:900px){
-  html,body,.app-shell,#startup-screen{height:var(--ppd-h,100%)!important;bottom:auto!important}
+  html,body{position:static!important;overflow:visible!important;height:var(--ppd-full,100%)!important;min-height:var(--ppd-full,100%)!important;width:100%;margin:0;background:#f3f6f8}
+  html{position:relative!important}
+  .app-shell,#startup-screen{position:absolute!important;top:0!important;left:0!important;right:auto!important;bottom:auto!important;width:100%!important;height:var(--ppd-full,100%)!important;min-height:0!important}
 }
