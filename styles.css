@@ -48,25 +48,30 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
   #booking-frame{position:absolute;inset:0;width:100%;height:100%;min-height:0}
 }
 
-/* v1.0.1.190: the app shell is pinned to the real screen edges. No bottom strip in any mode.
-   Only the top system inset is padded; the dock offset is handled inside the booking app. */
-@media (max-width:900px){
-  html,body{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:100%;min-height:100%;background:#f3f6f8}
-  .app-shell{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:auto;min-height:0;max-width:none;margin:0;padding-bottom:0;background:#f3f6f8;box-shadow:none}
-}
 @media (max-width:900px) and (display-mode:standalone){
-  html.ppd-standalone,html.ppd-standalone body{background:#f3f6f8}
-  /* v1.0.1.200: no green status-bar strip. The booking frame now starts at the very top of the screen and the
-     app header (inside the frame) draws the frosted status area itself. */
+  /* The home screen matches the existing light booking header. During splash,
+     the original image is allowed to extend behind the translucent status bar. */
+  html.ppd-standalone:not(.ppd-splash-active),html.ppd-standalone:not(.ppd-splash-active) body{background:#f3f6f8}
   html.ppd-standalone .app-shell,html.ppd-standalone.ppd-safe-area-on .app-shell{
-    padding-top:0;padding-bottom:0;background:#f3f6f8;
+    padding-top:0;padding-bottom:0;
+  }
+  /* Match the underlying Apps Script header surface in the iPhone status inset.
+     The earlier translucent WHITE fill was composited over the white PWA frame,
+     making the status region visibly whiter than the neutral frosted header.
+     This fill applies to every booking page, but never to the splash artwork. */
+  html.ppd-ios.ppd-standalone:not(.ppd-splash-active) .app-shell::before{
+    content:"";position:absolute;top:0;left:0;right:0;
+    height:env(safe-area-inset-top,0px);pointer-events:none;z-index:9;
+    background:#f3f6f8;
+    -webkit-backdrop-filter:blur(26px) saturate(180%);
+    backdrop-filter:blur(26px) saturate(180%);
   }
 }
 
 /* Approved badminton artwork only: no gradient overlay or decorative artwork layer. */
 .ppdSplashNew{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;background-color:transparent;background-image:none;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;transition:opacity .4s ease}
 .ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;transition:none;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.190");background-position:center center;background-size:cover}}
+@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.213");background-position:center center;background-size:cover}}
 .ppdSplashNew.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
 .ppdSplashNew.splash-leaving,.ppdSplashNew.ppdSplashLeaving{opacity:0;pointer-events:none}
 
@@ -116,11 +121,27 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 @media(prefers-reduced-motion:reduce){.startup-screen{transition:none}}
 
 
-/* v1.0.1.190: iOS standalone reports a layout viewport 62px shorter than the screen.
-   Phones therefore use a normal-flow html/body with an explicit full height (--ppd-full, set once in app.js);
-   the shell and splash are absolutely positioned inside it. No fixed/overflow clipping involved. */
+/* v1.0.1.206 — native-origin, in-page Player Settings Pushbell button. */
+#ppd-inline-push-native{position:fixed;z-index:17;min-height:44px;max-height:60px;min-width:0;border:1px solid #27825d;border-radius:11px;background:#087f5b;color:#fff;font:700 13px/1.35 system-ui,-apple-system,sans-serif;padding:8px 12px;text-align:center;white-space:normal;box-shadow:0 2px 8px #134c3220;touch-action:manipulation;}
+#ppd-inline-push-native:disabled{background:#e4ece8;border-color:#cbd8d1;color:#51675c;opacity:1;}
+#ppd-inline-push-native[hidden]{display:none!important;}
+
+/* v1.0.1.217: size the embedded booking area from the visible device viewport.
+   This is the PWA wrapper only; Apps Script retains the unchanged fixed header,
+   scrolling main content, and 16px default bottom navigation offset. When the
+   existing Mobile Safe Area setting is enabled, Apps Script adds its extra inset.
+   No physical screen.height / device-specific pixel calculations are used. */
 @media (max-width:900px){
-  html,body{position:static!important;overflow:visible!important;height:var(--ppd-full,100%)!important;min-height:var(--ppd-full,100%)!important;width:100%;margin:0;background:#f3f6f8}
-  html{position:relative!important}
-  .app-shell,#startup-screen{position:absolute!important;top:0!important;left:0!important;right:auto!important;bottom:auto!important;width:100%!important;height:var(--ppd-full,100%)!important;min-height:0!important}
+  html,body{
+    position:fixed;inset:0;width:100%;height:100%;min-height:0;
+    margin:0;overflow:hidden;overscroll-behavior:none;background:#f3f6f8;
+  }
+  .app-shell{
+    position:fixed;top:var(--ppd-visible-top,0px);left:0;right:0;bottom:auto;
+    width:100%;height:var(--ppd-visible-height,100dvh);min-height:0;max-width:none;
+    margin:0;display:flex;flex-direction:column;overflow:hidden;
+    background:#f3f6f8;box-shadow:none;
+  }
+  .frame-area{position:relative;flex:1 1 0;min-height:0;overflow:hidden;}
+  #booking-frame{position:absolute;inset:0;width:100%;height:100%;min-height:0;}
 }
