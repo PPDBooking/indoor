@@ -6,9 +6,16 @@
   <link rel="preconnect" href="https://script.googleusercontent.com" crossorigin>
   <link rel="dns-prefetch" href="https://ssl.gstatic.com">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
-  <meta name="theme-color" content="#f3f6f8">
+  <meta name="theme-color" content="#f2f4f6">
+  <script>
+  /* v1.0.1.213: the colour behind the iPhone status bar is set before the first paint: the loading artwork's own top-edge colour
+     (measured from the artwork on this phone and remembered), then the app's top-bar colour once the app is on screen. */
+  (function(){var d=document.documentElement,c='#013d27';try{c=localStorage.getItem('ppd_top_color_v1')||c;}catch(_){}
+    if(!/^#[0-9a-f]{6}$/i.test(c))c='#013d27';d.style.setProperty('--ppd-top-color',c);
+    var m=document.querySelector('meta[name="theme-color"]');if(m)m.setAttribute('content',c);})();
+  </script>
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="PPD Court">
   <meta name="description" content="Point Pedro Indoor Court booking portal">
   <meta name="referrer" content="strict-origin-when-cross-origin">
@@ -44,7 +51,7 @@
     @media (max-width:700px){
       html:has(#startup-screen:not([hidden])),
       html:has(#startup-screen:not([hidden])) body{
-        background-color:#075b43;
+        background-color:var(--ppd-top-color,#013d27);
         background-image:url("./assets/ppd-badminton-splash.webp");
         background-position:center center;
         background-size:cover;
@@ -52,12 +59,19 @@
       }
       html:has(#startup-screen:not([hidden])) .app-shell{
         padding-top:0;padding-bottom:0;
-        background:#075b43 url("./assets/ppd-badminton-splash.webp") center center / cover no-repeat;
+        background:var(--ppd-top-color,#013d27) url("./assets/ppd-badminton-splash.webp") center center / cover no-repeat;
       }
       /* The fixed overlay already spans the full available viewport. Keep its
          artwork and credits inside that same box so iOS cannot leave a safe-area strip. */
       #startup-screen{inset:0;width:100%;height:auto;}
       #startup-screen .ppdSplashInterior{height:100%;flex:none;}
+    }
+    :root{--ppd-status-color:var(--ppd-top-color,#013d27)}
+    html.ppd-app-ready{--ppd-status-color:#f3f6f8}
+    @media (max-width:900px){html,body{background-color:var(--ppd-status-color)!important}}
+    /* Loading screen: the artwork fades out of the status-bar colour at the top (size follows the screen height, no fixed pixels). */
+    @media (max-width:700px) and (display-mode:standalone){
+      #startup-screen .ppdSplashBackground::after{content:"";position:absolute;left:0;right:0;top:0;height:14dvh;background:linear-gradient(to bottom,var(--ppd-top-color,#013d27),transparent)}
     }
     /* v1.0.1.205: splash is a true full-screen fixed layer (no bottom strip). Credits keep clear of the home indicator. */
     @media (max-width:900px){

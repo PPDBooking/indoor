@@ -65,12 +65,35 @@
   const splashLogo=$('pwa-splash-logo');
   const splashBackgroundQuery=window.matchMedia('(min-width: 701px)');
   let splashBackgroundLoadId=0;
+  /* v1.0.1.213: status-bar colour. Splash = measured top edge of the loading artwork; app = top-bar colour. */
+  const rootEl=document.documentElement;
+  function applyStatusTheme(){
+    const c=rootEl.classList.contains('ppd-app-ready')?'#f3f6f8':(rootEl.style.getPropertyValue('--ppd-top-color').trim()||'#013d27');
+    const old=document.querySelector('meta[name="theme-color"]');
+    if(old&&old.getAttribute('content')===c)return;
+    const m=document.createElement('meta');m.name='theme-color';m.content=c;
+    if(old)old.replaceWith(m);else document.head.appendChild(m);
+  }
+  function sampleTopColor(img){
+    try{
+      const vw=window.innerWidth,vh=window.innerHeight,iw=img.naturalWidth,ih=img.naturalHeight;if(!iw||!ih||!vw||!vh)return;
+      const s=Math.max(vw/iw,vh/ih),sw=vw/s,sx=(iw-sw)/2,rows=Math.max(2,Math.round(ih*0.004)),cw=48;
+      const cv=document.createElement('canvas');cv.width=cw;cv.height=1;
+      const cx=cv.getContext('2d');cx.drawImage(img,sx,0,sw,rows,0,0,cw,1);
+      const d=cx.getImageData(0,0,cw,1).data;
+      const med=i=>{const a=[];for(let p=0;p<cw;p++)a.push(d[p*4+i]);a.sort((x,y)=>x-y);return a[a.length>>1];};
+      const hex='#'+[med(0),med(1),med(2)].map(v=>v.toString(16).padStart(2,'0')).join('');
+      rootEl.style.setProperty('--ppd-top-color',hex);
+      try{localStorage.setItem('ppd_top_color_v1',hex);}catch(_){}
+      applyStatusTheme();
+    }catch(_){}
+  }
   function preloadSplashBackground(){
     const loadId=++splashBackgroundLoadId;
     const desktop=splashBackgroundQuery.matches;
     startup.classList.remove('ppdSplashBackgroundReady');
     const image=new Image();image.decoding='async';
-    const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
+    const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0){startup.classList.add('ppdSplashBackgroundReady');if(!desktop)sampleTopColor(image);}};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
     image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.213':'./assets/ppd-badminton-splash.webp';
@@ -131,6 +154,7 @@
   const PAINT_WAIT_MS=8000;
   const displayStartup = (message,allowRetry=false) => {
     appPainted=false; startupResolved=false; startup.hidden=false; startup.classList.remove('splash-leaving');
+    rootEl.classList.remove('ppd-app-ready');applyStatusTheme();
     startupStatus.textContent=message;const splashLabel=$('startup-screen-text');if(splashLabel)splashLabel.textContent=allowRetry?'Connection needs attention':(message==='Checking your saved session securely.'?'Preparing your application...':message);startupActions.hidden=!allowRetry;
     if(!allowRetry && !startupTimer){
       startupTimer=setTimeout(()=>{
@@ -140,7 +164,7 @@
     }
   };
   const completeStartup = () => {
-    startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');setTimeout(()=>{if(startupResolved)startup.hidden=true;},400);
+    startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');rootEl.classList.add('ppd-app-ready');applyStatusTheme();setTimeout(()=>{if(startupResolved)startup.hidden=true;},400);
     if(startupTimer){clearTimeout(startupTimer);startupTimer=null;}
     if(paintTimer){clearTimeout(paintTimer);paintTimer=null;}
   };
