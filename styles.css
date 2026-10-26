@@ -66,7 +66,7 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 /* Approved badminton artwork only: no gradient overlay or decorative artwork layer. */
 .ppdSplashNew{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;background-color:transparent;background-image:none;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;transition:opacity .4s ease}
 .ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;transition:none;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.211");background-position:center center;background-size:cover}}
+@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.212");background-position:center center;background-size:cover}}
 .ppdSplashNew.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
 .ppdSplashNew.splash-leaving,.ppdSplashNew.ppdSplashLeaving{opacity:0;pointer-events:none}
 
@@ -121,11 +121,20 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 #ppd-inline-push-native:disabled{background:#e4ece8;border-color:#cbd8d1;color:#51675c;opacity:1;}
 #ppd-inline-push-native[hidden]{display:none!important;}
 
-/* v1.0.1.190: iOS standalone reports a layout viewport 62px shorter than the screen.
-   Phones therefore use a normal-flow html/body with an explicit full height (--ppd-full, set once in app.js);
-   the shell and splash are absolutely positioned inside it. No fixed/overflow clipping involved. */
+/* v1.0.1.212: keep the mobile PWA wrapper inside the application viewport.
+   Do not size the document from physical screen.height: that can make the page scroll
+   and move the embedded booking header and bottom navigation together. The splash remains
+   its own fixed overlay, while only the embedded booking content occupies the shell. */
 @media (max-width:900px){
-  html,body{position:static!important;overflow:visible!important;height:var(--ppd-full,100%)!important;min-height:var(--ppd-full,100%)!important;width:100%;margin:0;background:#f3f6f8}
-  html{position:relative!important}
-  .app-shell,#startup-screen{position:absolute!important;top:0!important;left:0!important;right:auto!important;bottom:auto!important;width:100%!important;height:var(--ppd-full,100%)!important;min-height:0!important}
+  html,body{
+    position:fixed;inset:0;width:100%;height:100%;min-height:0;
+    margin:0;overflow:hidden;overscroll-behavior:none;background:#f3f6f8;
+  }
+  .app-shell{
+    position:fixed;inset:0;width:100%;height:100%;min-height:0;max-width:none;
+    margin:0;display:flex;flex-direction:column;overflow:hidden;
+    background:#f3f6f8;box-shadow:none;
+  }
+  .frame-area{position:relative;flex:1 1 0;min-height:0;overflow:hidden;}
+  #booking-frame{position:absolute;inset:0;width:100%;height:100%;min-height:0;}
 }

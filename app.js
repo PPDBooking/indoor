@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.1.211: shared mobile glass dock and safe-area control. */
+/* GitHub Pages PWA wrapper v1.0.1.212: stable mobile viewport layout. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.211';
-  const PWA_BUILD_NUMBER='211';
+  const PWA_VERSION='1.0.1.212';
+  const PWA_BUILD_NUMBER='212';
   const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -20,18 +20,6 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   document.documentElement.classList.toggle('ppd-standalone',standalone());
   document.documentElement.classList.toggle('ppd-ios',isIOS);
-  /* v1.0.1.204: full-height fix for iOS standalone. Uses screen.height only, never innerHeight, so it cannot oscillate. */
-  function applyFullHeight(){
-    const root=document.documentElement;
-    try{
-      const portrait=window.innerHeight>window.innerWidth;
-      const full=screen.height||0;
-      if(isIOS&&standalone()&&portrait&&full>=500&&full<=1400)root.style.setProperty('--ppd-full',full+'px');
-      else root.style.removeProperty('--ppd-full');
-    }catch(_){root.style.removeProperty('--ppd-full');}
-  }
-  applyFullHeight();
-  ['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(applyFullHeight,80)));
   const hasApis = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window) && window.isSecureContext;
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
   let gasWindow = null, gasOrigin = '', currentUserId = '';
@@ -85,7 +73,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.211':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.212':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
