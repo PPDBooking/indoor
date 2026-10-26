@@ -61,6 +61,15 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
   html.ppd-standalone .app-shell,html.ppd-standalone.ppd-safe-area-on .app-shell{
     padding-top:0;padding-bottom:0;
   }
+  /* The native iPhone status inset and iframe header use the same glass fill.
+     Keep this off during splash so the original badminton artwork remains visible. */
+  html.ppd-ios.ppd-standalone:not(.ppd-splash-active) .app-shell::before{
+    content:"";position:absolute;top:0;left:0;right:0;
+    height:env(safe-area-inset-top,0px);pointer-events:none;z-index:9;
+    background:rgba(255,255,255,.62);
+    -webkit-backdrop-filter:blur(26px) saturate(180%);
+    backdrop-filter:blur(26px) saturate(180%);
+  }
 }
 
 /* Approved badminton artwork only: no gradient overlay or decorative artwork layer. */
