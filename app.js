@@ -4,8 +4,8 @@
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.207';
-  const PWA_BUILD_NUMBER='207';
+  const PWA_VERSION='1.0.1.208';
+  const PWA_BUILD_NUMBER='208';
   const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -26,7 +26,7 @@
     try{
       const portrait=window.innerHeight>window.innerWidth;
       let full=screen.height||0;
-      /* v1.0.1.207 diagnostics: X1 uses innerHeight, X2 uses visualViewport height, X3/X4 drop the forced height (CSS locks the page). */
+      /* v1.0.1.208 diagnostics: X1 uses innerHeight, X2 uses visualViewport height, X3/X4 drop the forced height (CSS locks the page). */
       if(root.classList.contains('ppd-x1'))full=window.innerHeight||0;
       else if(root.classList.contains('ppd-x2'))full=Math.round((window.visualViewport&&window.visualViewport.height)||window.innerHeight||0);
       const noForce=root.classList.contains('ppd-x3')||root.classList.contains('ppd-x4');
@@ -36,7 +36,7 @@
   }
   applyFullHeight();
   ['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(applyFullHeight,80)));
-  /* v1.0.1.207: debug panel is ON for the first 5 minutes in the installed app (set DEBUG_STANDALONE_SECONDS to 0 to turn it off again) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
+  /* v1.0.1.208: debug panel is ON for the first 5 minutes in the installed app (set DEBUG_STANDALONE_SECONDS to 0 to turn it off again) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
   (function(){
     const DEBUG_STANDALONE_SECONDS=300;
     const forced=/[?&]ppddebug=1/.test(location.search);
@@ -44,12 +44,12 @@
     const root=document.documentElement;
     const setFull=applyFullHeight;
     const wrap=document.createElement('div');
-    wrap.style.cssText='position:fixed;z-index:2147483647;left:6px;top:70px;font:11px/1.35 monospace;color:#7dffb0;background:#000c;border-radius:8px;padding:6px 8px;max-width:78vw';
+    wrap.setAttribute('data-ppd-debug','1');wrap.style.cssText='position:fixed;z-index:2147483647;left:6px;top:70px;font:11px/1.35 monospace;color:#7dffb0;background:#000c;border-radius:8px;padding:6px 8px;max-width:78vw';
     const pre=document.createElement('pre');pre.style.cssText='margin:0 0 6px;white-space:pre;pointer-events:none';
     const row=document.createElement('div');row.style.cssText='display:flex;gap:6px;flex-wrap:wrap';
     wrap.appendChild(pre);wrap.appendChild(row);root.appendChild(wrap);
     const probe=document.createElement('div');
-    probe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
+    probe.setAttribute('data-ppd-debug','1');probe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;visibility:hidden;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)';
     root.appendChild(probe);
     let current='off';
     const show=()=>{setFull();const cs=getComputedStyle(probe),vv=window.visualViewport;
@@ -117,7 +117,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.207':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.208':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -188,7 +188,7 @@
     if(startupTimer){clearTimeout(startupTimer);startupTimer=null;}
     if(paintTimer){clearTimeout(paintTimer);paintTimer=null;}
   };
-  /* v1.0.1.207: the splash stays up until the booking app reports its first painted page (PPD_APP_PAINTED), so no blank white gap appears.
+  /* v1.0.1.208: the splash stays up until the booking app reports its first painted page (PPD_APP_PAINTED), so no blank white gap appears.
      A fallback timer prevents the splash from ever getting stuck. */
   const completeStartupWhenPainted = () => {
     if(appPainted){completeStartup();return;}

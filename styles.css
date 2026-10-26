@@ -66,7 +66,7 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 /* Approved badminton artwork only: no gradient overlay or decorative artwork layer. */
 .ppdSplashNew{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;padding:0;background-color:transparent;background-image:none;color:#fff;font-family:system-ui,-apple-system,"Segoe UI",sans-serif;opacity:1;transition:opacity .4s ease}
 .ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;transition:none;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.207");background-position:center center;background-size:cover}}
+@media(min-width:701px){.ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.208");background-position:center center;background-size:cover}}
 .ppdSplashNew.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
 .ppdSplashNew.splash-leaving,.ppdSplashNew.ppdSplashLeaving{opacity:0;pointer-events:none}
 
@@ -130,11 +130,11 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
 #ppd-inline-push-native:disabled{background:#e4ece8;border-color:#cbd8d1;color:#51675c;opacity:1;}
 #ppd-inline-push-native[hidden]{display:none!important;}
 
-/* v1.0.1.207: reserve the splash "Version" line so the footer never jumps when the number arrives. */
+/* v1.0.1.208: reserve the splash "Version" line so the footer never jumps when the number arrives. */
 .ppdSplashCredit b:empty::before{content:"\00a0";}
 .ppdSplashCredit b{min-height:1.25em;}
 
-/* v1.0.1.207: live layout experiments for the on-screen test panel (installed iPhone app only). */
+/* v1.0.1.208: live layout experiments for the on-screen test panel (installed iPhone app only). */
 @media (max-width:900px){
   html.ppd-x3,html.ppd-x3 body{position:fixed!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:100%!important;min-height:0!important;overflow:hidden!important;overscroll-behavior:none}
   html.ppd-x3 .app-shell,html.ppd-x3 #startup-screen{position:absolute!important;top:0!important;left:0!important;right:0!important;bottom:0!important;width:100%!important;height:100%!important}
