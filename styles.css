@@ -55,11 +55,11 @@ html,body{position:relative;overscroll-behavior:none;overflow:hidden}
   .app-shell{position:fixed;top:0;left:0;right:0;bottom:0;width:100%;height:auto;min-height:0;max-width:none;margin:0;padding-bottom:0;background:#f3f6f8;box-shadow:none}
 }
 @media (max-width:900px) and (display-mode:standalone){
-  html.ppd-standalone,html.ppd-standalone body{background:#f3f6f8}
-  /* v1.0.1.200: no green status-bar strip. The booking frame now starts at the very top of the screen and the
-     app header (inside the frame) draws the frosted status area itself. */
+  /* The home screen matches the existing light booking header. During splash,
+     the original image is allowed to extend behind the translucent status bar. */
+  html.ppd-standalone:not(.ppd-splash-active),html.ppd-standalone:not(.ppd-splash-active) body{background:#f3f6f8}
   html.ppd-standalone .app-shell,html.ppd-standalone.ppd-safe-area-on .app-shell{
-    padding-top:0;padding-bottom:0;background:#f3f6f8;
+    padding-top:0;padding-bottom:0;
   }
 }
 
