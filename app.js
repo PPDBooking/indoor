@@ -4,7 +4,7 @@
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.208';
+  const PWA_VERSION='1.0.1.209';
   const PWA_BUILD_NUMBER='208';
   const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
@@ -20,7 +20,7 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   document.documentElement.classList.toggle('ppd-standalone',standalone());
   document.documentElement.classList.toggle('ppd-ios',isIOS);
-  /* v1.0.1.208: page height is locked by CSS (fixed, 100%); no JS height forcing and no test panel. */
+  /* v1.0.1.209: page height is locked by CSS (fixed, 100%); no JS height forcing and no test panel. */
   document.documentElement.style.removeProperty('--ppd-full');
   const hasApis = () => ('Notification' in window) && ('serviceWorker' in navigator) && ('PushManager' in window) && window.isSecureContext;
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
@@ -75,7 +75,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.208':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.209':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -91,10 +91,10 @@
     if(version)$('pwa-splash-version').textContent=version;
     if(persist&&(typeof data.developerName==='string'||version)){try{
       const previous=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'{}');
-      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'1.0.1.188').slice(0,40)}));
+      localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'').slice(0,40)}));
     }catch(_){}}
   }
-  try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta&&typeof savedSplashMeta.developerName==='string')applySplashMetadata({developerName:savedSplashMeta.developerName},false);}catch(_){}
+  try{const savedSplashMeta=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'null');if(savedSplashMeta)applySplashMetadata({developerName:savedSplashMeta.developerName,appVersion:savedSplashMeta.appVersion},false);}catch(_){}
   let splashLogoFallbackTimer=setTimeout(showSplashLogoFallback,2000);
   function showSplashLogoFallback(){
     if(splashLogo&&!splashLogo.classList.contains('ppdLogoReady')&&splashLogo.parentElement)
@@ -146,13 +146,12 @@
     if(startupTimer){clearTimeout(startupTimer);startupTimer=null;}
     if(paintTimer){clearTimeout(paintTimer);paintTimer=null;}
   };
-  /* v1.0.1.208: the splash stays up until the booking app reports its first painted page (PPD_APP_PAINTED), so no blank white gap appears.
+  /* v1.0.1.209: the splash stays up until the booking app reports its first painted page (PPD_APP_PAINTED), so no blank white gap appears.
      A fallback timer prevents the splash from ever getting stuck. */
   const completeStartupWhenPainted = () => {
     if(appPainted){completeStartup();return;}
     if(!paintTimer)paintTimer=setTimeout(()=>{paintTimer=null;completeStartup();bioPresent();},PAINT_WAIT_MS);
   };
-  try{const lastBrand=localStorage.getItem('ppd_public_brand_logo');if(lastBrand && /^https:\/\//i.test(lastBrand))$('pwa-splash-logo').src=lastBrand;}catch(_){}
   displayStartup('Checking your saved session securely.');
   $('startup-retry').addEventListener('click',()=>{
     displayStartup('Reconnecting to the court app\u2026');
@@ -596,6 +595,7 @@
        postToGAS('PPD_SPLASH_METADATA_ACK');
        return;
     }else if(d.type==='PPD_APP_PAINTED'){
+      if(authRestoring)return;
       appPainted=true;
       if(paintTimer){clearTimeout(paintTimer);paintTimer=null;completeStartup();bioPresent();}
       return;
@@ -630,13 +630,6 @@
        return;
     }else if(d.type==='PPD_AUTH_READY'){
        applySplashMetadata({developerName:d.developerName,appVersion:d.appVersion},true);
-       if(typeof d.logoUrl==='string' && $('pwa-splash-logo')){
-         const candidate=d.logoUrl.trim();
-         if(/^https:\/\//i.test(candidate) || /^data:image\/(?:png|jpeg|webp);base64,/i.test(candidate)){
-           $('pwa-splash-logo').src=candidate;
-           try{localStorage.setItem('ppd_public_brand_logo',candidate.length<8000?candidate:'');}catch(_){/* optional public metadata */}
-         }
-       }
       postToGAS('PPD_AUTH_ACK');
       authRestoring=!!d.restoring;
       if(authRestoring){
