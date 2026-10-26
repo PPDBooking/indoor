@@ -7,6 +7,16 @@
   <link rel="dns-prefetch" href="https://ssl.gstatic.com">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
   <meta name="theme-color" content="#f3f6f8">
+  <!-- Before the deferred bundle runs, give ONLY installed iOS PWAs a splash-
+       coloured native-bar fallback; the bundle restores the home colour. -->
+  <script>
+    if ((navigator.standalone === true ||
+         window.matchMedia('(display-mode: standalone)').matches) &&
+        (/iPhone|iPad|iPod/i.test(navigator.userAgent) ||
+         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1))) {
+      document.querySelector('meta[name="theme-color"]').content = '#075b43';
+    }
+  </script>
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="PPD Court">
@@ -65,9 +75,9 @@
       #startup-screen .ppdSplashInterior{position:absolute;inset:0;height:auto;max-height:none;width:min(100%,660px);margin:0 auto;flex:none;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=1.0.1.217">
+  <link rel="stylesheet" href="./styles.css?v=1.0.1.218">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js?v=1.0.1.217" defer></script>
+  <script src="./app.js?v=1.0.1.218" defer></script>
 </head>
 <body>
   <div class="app-shell">

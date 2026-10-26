@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.1.217: dynamic visible viewport; original header/dock styling retained. */
+/* GitHub Pages PWA wrapper v1.0.1.218: iOS standalone full-bleed viewport correction; Android layout unchanged. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.217';
-  const PWA_BUILD_NUMBER='217';
+  const PWA_VERSION='1.0.1.218';
+  const PWA_BUILD_NUMBER='218';
   const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -20,12 +20,25 @@
   const standalone = () => window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
   document.documentElement.classList.toggle('ppd-standalone',standalone());
   document.documentElement.classList.toggle('ppd-ios',isIOS);
-  // Keep the iframe within the current *visible* viewport. iOS may change
-  // visualViewport.height/offsetTop while its keyboard is shown; rebuilding this
-  // rectangle also restores the original alignment when the keyboard closes.
-  // Do not alter the booking app's own 16px dock gap or its Safe Area preference.
+  // iOS standalone system-bar fallback: use the splash green until the booking
+  // page is shown, then restore the existing light header colour. This only
+  // paints the OS-owned area; it does not reposition any app element.
+  const themeColorMeta=document.querySelector('meta[name="theme-color"]');
+  function setIOSSystemBackdrop(splashActive){
+    if(isIOS&&standalone()&&themeColorMeta)
+      themeColorMeta.content=splashActive?'#075b43':'#f3f6f8';
+  }
+  setIOSSystemBackdrop(true);
+  // The installed iPhone viewport may report a visualViewport shorter than
+  // the *layout* viewport even with the keyboard closed (native status/home
+  // indicator insets). Using that smaller value for the shell left an unpainted
+  // strip under the splash and a different-coloured strip below the booking UI.
+  // A normal iOS standalone page instead occupies the full CSS dynamic viewport;
+  // only the OPEN KEYBOARD is allowed to shrink the shell. Do not add safe-area
+  // padding here: the booking app owns its 16px default dock gap and optional
+  // Mobile Safe Area adjustment. Other platforms retain their v217 behaviour.
   const mobileViewportQuery=window.matchMedia('(max-width: 900px)');
-  let visibleViewportFrame=0;
+  let visibleViewportFrame=0, iosUnobstructedHeight=0, iosViewportOrientation='';
   function syncVisibleViewport(){
     visibleViewportFrame=0;
     const root=document.documentElement;
@@ -39,8 +52,30 @@
       ?viewport.height:window.innerHeight;
     const top=viewport&&Number.isFinite(viewport.offsetTop)
       ?Math.max(0,viewport.offsetTop):0;
-    // Keep screen geometry at actual measured CSS pixel dimensions, not
-    // a physical-screen estimate or any model-specific hardcoded height.
+    if(isIOS&&standalone()){
+      // Use measured CSS sizes; physical screen.height is never involved.
+      const orientation=window.screen.orientation?.type||
+        (typeof window.orientation==='number'?(Math.abs(window.orientation)%180===90?'landscape':'portrait'):
+          (window.innerWidth>window.innerHeight?'landscape':'portrait'));
+      const layoutHeight=Math.max(window.innerHeight||0,root.clientHeight||0);
+      if(orientation!==iosViewportOrientation){
+        iosViewportOrientation=orientation;
+        iosUnobstructedHeight=Math.max(layoutHeight,height+top);
+      }
+      // A substantial loss of visual height indicates a keyboard, not the
+      // normal 20-60px difference caused by iOS system bars. Preserve the last
+      // unobstructed measurement while the keyboard is visible.
+      const reference=Math.max(iosUnobstructedHeight,layoutHeight);
+      const keyboardOpen=reference-(height+top)>Math.max(150,reference*.2);
+      if(!keyboardOpen){
+        iosUnobstructedHeight=Math.max(iosUnobstructedHeight,layoutHeight,height+top);
+        root.style.setProperty('--ppd-visible-height','100dvh');
+        root.style.setProperty('--ppd-visible-top','0px');
+        return;
+      }
+    }
+    // Keep the previous v217 visible-viewport resizing for an open keyboard
+    // and for all Android / non-standalone devices.
     root.style.setProperty('--ppd-visible-height',Math.round(height)+'px');
     root.style.setProperty('--ppd-visible-top',Math.round(top)+'px');
   }
@@ -166,7 +201,7 @@
   let appPainted=false, paintTimer=null;
   const PAINT_WAIT_MS=8000;
   const displayStartup = (message,allowRetry=false) => {
-    appPainted=false; startupResolved=false; startup.hidden=false; startup.classList.remove('splash-leaving'); document.documentElement.classList.add('ppd-splash-active');
+    appPainted=false; startupResolved=false; startup.hidden=false; startup.classList.remove('splash-leaving'); document.documentElement.classList.add('ppd-splash-active');setIOSSystemBackdrop(true);
     startupStatus.textContent=message;const splashLabel=$('startup-screen-text');if(splashLabel)splashLabel.textContent=allowRetry?'Connection needs attention':(message==='Checking your saved session securely.'?'Preparing your application...':message);startupActions.hidden=!allowRetry;
     if(!allowRetry && !startupTimer){
       startupTimer=setTimeout(()=>{
@@ -176,7 +211,7 @@
     }
   };
   const completeStartup = () => {
-    startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');document.documentElement.classList.remove('ppd-splash-active');setTimeout(()=>{if(startupResolved)startup.hidden=true;},400);
+    startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');document.documentElement.classList.remove('ppd-splash-active');setIOSSystemBackdrop(false);setTimeout(()=>{if(startupResolved)startup.hidden=true;},400);
     if(startupTimer){clearTimeout(startupTimer);startupTimer=null;}
     if(paintTimer){clearTimeout(paintTimer);paintTimer=null;}
   };
