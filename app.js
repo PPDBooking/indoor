@@ -4,8 +4,8 @@
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.206';
-  const PWA_BUILD_NUMBER='206';
+  const PWA_VERSION='1.0.1.207';
+  const PWA_BUILD_NUMBER='207';
   const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -25,16 +25,20 @@
     const root=document.documentElement;
     try{
       const portrait=window.innerHeight>window.innerWidth;
-      const full=screen.height||0;
-      if(isIOS&&standalone()&&portrait&&full>=500&&full<=1400)root.style.setProperty('--ppd-full',full+'px');
+      let full=screen.height||0;
+      /* v1.0.1.207 diagnostics: X1 uses innerHeight, X2 uses visualViewport height, X3/X4 drop the forced height (CSS locks the page). */
+      if(root.classList.contains('ppd-x1'))full=window.innerHeight||0;
+      else if(root.classList.contains('ppd-x2'))full=Math.round((window.visualViewport&&window.visualViewport.height)||window.innerHeight||0);
+      const noForce=root.classList.contains('ppd-x3')||root.classList.contains('ppd-x4');
+      if(!noForce&&isIOS&&standalone()&&portrait&&full>=500&&full<=1400)root.style.setProperty('--ppd-full',full+'px');
       else root.style.removeProperty('--ppd-full');
     }catch(_){root.style.removeProperty('--ppd-full');}
   }
   applyFullHeight();
   ['resize','orientationchange','pageshow'].forEach(e=>window.addEventListener(e,()=>setTimeout(applyFullHeight,80)));
-  /* v1.0.1.205: debug panel is now off by default (set DEBUG_STANDALONE_SECONDS above 0 to bring it back) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
+  /* v1.0.1.207: debug panel is ON for the first 5 minutes in the installed app (set DEBUG_STANDALONE_SECONDS to 0 to turn it off again) (first 120s in the installed app, or ?ppddebug=1) with live layout experiments X1-X4. */
   (function(){
-    const DEBUG_STANDALONE_SECONDS=0;
+    const DEBUG_STANDALONE_SECONDS=300;
     const forced=/[?&]ppddebug=1/.test(location.search);
     if(!(forced||(DEBUG_STANDALONE_SECONDS>0&&standalone())))return;
     const root=document.documentElement;
@@ -49,7 +53,7 @@
     root.appendChild(probe);
     let current='off';
     const show=()=>{setFull();const cs=getComputedStyle(probe),vv=window.visualViewport;
-      pre.textContent=['variant '+current,'screen '+screen.width+'x'+screen.height,'inner '+innerWidth+'x'+innerHeight,'visual '+(vv?Math.round(vv.width)+'x'+Math.round(vv.height):'n/a'),'docEl '+root.clientHeight,'inset top '+cs.paddingTop+' bottom '+cs.paddingBottom,'standalone '+standalone()].join('\n');};
+      pre.textContent=['variant '+current,'screen '+screen.width+'x'+screen.height,'inner '+innerWidth+'x'+innerHeight,'visual '+(vv?Math.round(vv.width)+'x'+Math.round(vv.height):'n/a'),'docEl '+root.clientHeight+' scrollH '+root.scrollHeight+' scrollY '+Math.round(window.pageYOffset||0),'shell '+Math.round((document.querySelector('.app-shell')||root).getBoundingClientRect().height)+' top '+Math.round((document.querySelector('.app-shell')||root).getBoundingClientRect().top),'X1 inner | X2 visual | X3 lock | X4 lock+dvh','inset top '+cs.paddingTop+' bottom '+cs.paddingBottom,'standalone '+standalone()].join('\n');};
     ['off','x1','x2','x3','x4'].forEach(v=>{
       const b=document.createElement('button');b.type='button';b.textContent=v==='off'?'Off':v.toUpperCase();
       b.style.cssText='min-width:44px;min-height:34px;border-radius:7px;border:1px solid #7dffb0;background:#06301f;color:#fff;font:12px monospace';
@@ -113,7 +117,7 @@
     const reveal=()=>{if(loadId===splashBackgroundLoadId&&splashBackgroundQuery.matches===desktop&&image.naturalWidth>0)startup.classList.add('ppdSplashBackgroundReady');};
     image.onload=()=>{if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();};
     image.onerror=()=>{};
-    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.205':'./assets/ppd-badminton-splash.webp';
+    image.src=desktop?'./assets/ppd-badminton-desktop.webp?v=1.0.1.207':'./assets/ppd-badminton-splash.webp';
     if(image.complete&&image.naturalWidth>0){if(typeof image.decode==='function')image.decode().then(reveal).catch(reveal);else reveal();}
   }
   preloadSplashBackground();
@@ -167,8 +171,10 @@
   })();
   iframe.src = GAS_URL;
   let startupTimer=null;
+  let appPainted=false, paintTimer=null;
+  const PAINT_WAIT_MS=8000;
   const displayStartup = (message,allowRetry=false) => {
-    startupResolved=false; startup.hidden=false; startup.classList.remove('splash-leaving');
+    appPainted=false; startupResolved=false; startup.hidden=false; startup.classList.remove('splash-leaving');
     startupStatus.textContent=message;const splashLabel=$('startup-screen-text');if(splashLabel)splashLabel.textContent=allowRetry?'Connection needs attention':(message==='Checking your saved session securely.'?'Preparing your application...':message);startupActions.hidden=!allowRetry;
     if(!allowRetry && !startupTimer){
       startupTimer=setTimeout(()=>{
@@ -180,6 +186,13 @@
   const completeStartup = () => {
     startupResolved=true;startupActions.hidden=true;startup.classList.add('splash-leaving');setTimeout(()=>{if(startupResolved)startup.hidden=true;},400);
     if(startupTimer){clearTimeout(startupTimer);startupTimer=null;}
+    if(paintTimer){clearTimeout(paintTimer);paintTimer=null;}
+  };
+  /* v1.0.1.207: the splash stays up until the booking app reports its first painted page (PPD_APP_PAINTED), so no blank white gap appears.
+     A fallback timer prevents the splash from ever getting stuck. */
+  const completeStartupWhenPainted = () => {
+    if(appPainted){completeStartup();return;}
+    if(!paintTimer)paintTimer=setTimeout(()=>{paintTimer=null;completeStartup();bioPresent();},PAINT_WAIT_MS);
   };
   try{const lastBrand=localStorage.getItem('ppd_public_brand_logo');if(lastBrand && /^https:\/\//i.test(lastBrand))$('pwa-splash-logo').src=lastBrand;}catch(_){}
   displayStartup('Checking your saved session securely.');
@@ -624,6 +637,10 @@
        applySplashMetadata(d,true);
        postToGAS('PPD_SPLASH_METADATA_ACK');
        return;
+    }else if(d.type==='PPD_APP_PAINTED'){
+      appPainted=true;
+      if(paintTimer){clearTimeout(paintTimer);paintTimer=null;completeStartup();bioPresent();}
+      return;
     }else if(d.type==='PPD_SESSION_REQUEST'){
       const saved=savedSession();
       postToGAS('PPD_SESSION_RECOVER',{token:saved?saved.token:''});
@@ -679,7 +696,7 @@
         deviceRegistered=false;pushReady=false;registrationPromptShownForUser='';registrationCheckPendingUser='';
       }
       if(!authReady){deviceRegistered=false;pushReady=false;registrationCheckPendingUser='';registrationPromptShownForUser='';inlinePushVisible=false;inlinePushSlot=null;inlinePushNative.hidden=true;}
-      completeStartup();bioPresent();sendPwaInfo();
+      completeStartupWhenPainted();bioPresent();sendPwaInfo();
       if(authReady&&(!wasAuthenticated||previousUser!==currentUserId)){
         registrationPromptShownForUser='';
         if('Notification' in window&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);

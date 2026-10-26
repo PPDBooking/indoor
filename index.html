@@ -29,13 +29,13 @@
   <link rel="apple-touch-startup-image" href="./assets/startup/startup-750x1334.jpg" media="(device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
   <link rel="apple-touch-startup-image" href="./assets/startup/startup-640x1136.jpg" media="(device-width: 320px) and (device-height: 568px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
   <link rel="preload" as="image" href="./assets/ppd-badminton-splash.webp" fetchpriority="high" media="(max-width: 700px)">
-  <link rel="preload" as="image" href="./assets/ppd-badminton-desktop.webp?v=1.0.1.205" fetchpriority="high" media="(min-width: 701px)">
+  <link rel="preload" as="image" href="./assets/ppd-badminton-desktop.webp?v=1.0.1.207" fetchpriority="high" media="(min-width: 701px)">
   <style>
     /* The original image is the sole splash backdrop, including the mobile root edges. */
     #startup-screen{position:fixed;inset:0;z-index:999999;isolation:isolate;display:flex;align-items:center;justify-content:center;overflow:hidden;background-color:transparent;background-image:none;color:#fff}
     #startup-screen[hidden]{display:none!important}
     #startup-screen .ppdSplashBackground{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:1;transition:none;background-image:url("./assets/ppd-badminton-splash.webp");background-position:center center;background-size:cover;background-repeat:no-repeat}
-    @media (min-width:701px){#startup-screen .ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.205")}}
+    @media (min-width:701px){#startup-screen .ppdSplashBackground{background-image:url("./assets/ppd-badminton-desktop.webp?v=1.0.1.207")}}
     #startup-screen.ppdSplashBackgroundReady .ppdSplashBackground{opacity:1}
     #startup-screen .ppdSplashInterior{position:relative;z-index:1}
     /* Keep the splash artwork and credits within one full-screen overlay, with
@@ -64,9 +64,9 @@
       #startup-screen .ppdSplashInterior{position:absolute;inset:0;height:auto;max-height:none;width:min(100%,660px);margin:0 auto;flex:none;padding-bottom:calc(14px + env(safe-area-inset-bottom,0px))}
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=1.0.1.206">
+  <link rel="stylesheet" href="./styles.css?v=1.0.1.207">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js?v=1.0.1.206" defer></script>
+  <script src="./app.js?v=1.0.1.207" defer></script>
 </head>
 <body>
   <div class="app-shell">
