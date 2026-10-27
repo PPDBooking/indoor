@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.1.220: canonical iOS viewport, no bottom bleed. */
+/* GitHub Pages PWA wrapper v1.0.1.221: iOS full-edge shell without height bleed. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.220';
-  const PWA_BUILD_NUMBER='220';
+  const PWA_VERSION='1.0.1.221';
+  const PWA_BUILD_NUMBER='221';
   const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -43,6 +43,7 @@
     if(!mobileViewportQuery.matches){
       root.style.removeProperty('--ppd-visible-height');
       root.style.removeProperty('--ppd-visible-top');
+      root.style.removeProperty('--ppd-visible-bottom');
       return;
     }
     const viewport=window.visualViewport;
@@ -63,14 +64,17 @@
       const keyboardOpen=reference-(height+top)>Math.max(150,reference*.2);
       if(!keyboardOpen){
         iosUnobstructedHeight=Math.max(reference,height+top);
-        // Let the single stylesheet rule provide exactly 100dvh, with no
-        // screen.height correction and no extra home-indicator padding.
+        // Use the original viewport edges rather than imposing a numerical
+        // height. No screen-height inflation or home-indicator padding.
         root.style.removeProperty('--ppd-visible-height');
         root.style.removeProperty('--ppd-visible-top');
+        root.style.removeProperty('--ppd-visible-bottom');
         return;
       }
     }
-    // Open iOS keyboard and non-iOS device behaviour already used in v217.
+    // For an open iOS keyboard, temporarily size the shell to the visible
+    // region; the lower edge anchor is restored when the keyboard closes.
+    if(isIOS&&standalone())root.style.setProperty('--ppd-visible-bottom','auto');
     root.style.setProperty('--ppd-visible-height',Math.round(height)+'px');
     root.style.setProperty('--ppd-visible-top',Math.round(top)+'px');
   }
