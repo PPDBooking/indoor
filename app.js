@@ -61,10 +61,14 @@
     if(!PPD_VIEWPORT_DEBUG&&!/[?&]ppddebug=1/.test(location.search))return;
     let box=document.getElementById('ppd-viewport-debug');
     if(!box){
-      box=document.createElement('pre');
+      box=document.createElement('div');
       box.id='ppd-viewport-debug';
       box.style.cssText='position:fixed;z-index:2147483647;left:6px;right:6px;top:calc(env(safe-area-inset-top,0px) + 4px);margin:0;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,.78);color:#9dffb5;font:11px/1.35 ui-monospace,Menlo,monospace;pointer-events:none;white-space:pre-wrap';
       document.body.appendChild(box);
+      const bar=document.createElement('div');bar.id='ppd-exp-bar';bar.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;pointer-events:auto';
+      [['tc','no theme-color'],['vp','plain viewport'],['unfix','html not fixed'],['lvh','100lvh'],['mark','red line']].forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.textContent=t;b.style.cssText='font:11px system-ui;padding:4px 7px;border-radius:6px;border:1px solid #9dffb5;background:#123;color:#9dffb5';b.addEventListener('click',()=>{exp[k]=!exp[k];applyExperiments();});bar.appendChild(b);});
+      box.appendChild(bar);
+      const txt=document.createElement('pre');txt.id='ppd-exp-text';txt.style.cssText='margin:0;font:inherit;white-space:pre-wrap';box.insertBefore(txt,bar);
     }
     const root=document.documentElement, vv=window.visualViewport;
     const probe=document.createElement('div');
@@ -78,9 +82,26 @@
     bt.style.cssText='position:fixed;left:0;bottom:0;width:0;height:0';
     document.body.appendChild(bt); const fixedBottom=Math.round(bt.getBoundingClientRect().bottom); bt.remove();
     let man='-'; try{man=getComputedStyle(document.documentElement).getPropertyValue('--x')||'-';}catch(e){}
-    box.textContent=['inner '+innerWidth+'x'+innerHeight,'visual '+(vv?Math.round(vv.height):'-'),
+    const on=Object.keys(exp).filter(k=>exp[k]).join(',')||'none';
+    box.querySelector('#ppd-exp-text').textContent=['ON: '+on,'inner '+innerWidth+'x'+innerHeight,'visual '+(vv?Math.round(vv.height):'-'),
       'screen '+screen.width+'x'+screen.height,'html.clientH '+root.clientHeight,
-      'safe-bottom '+sab,'100lvh '+lvh+'  fixed-bottom '+fixedBottom,'outer '+outerWidth+'x'+outerHeight+' dpr '+devicePixelRatio,'standalone nav='+navigator.standalone+' mq='+matchMedia('(display-mode: standalone)').matches+' ver 223','extend '+root.classList.contains('ppd-extend-bottom')+' '+(root.style.getPropertyValue('--ppd-full-height')||'-')].join('\n');
+      'safe-bottom '+sab,'100lvh '+lvh+'  fixed-bottom '+fixedBottom,'outer '+outerWidth+'x'+outerHeight+' dpr '+devicePixelRatio,'standalone nav='+navigator.standalone+' mq='+matchMedia('(display-mode: standalone)').matches+' ver 223','extend '+root.classList.contains('ppd-extend-bottom')].join('\n');
+  }
+  // ---- TEST BUILD: live experiments to find what leaves the bottom strip. ----
+  const exp={tc:false,vp:false,unfix:false,lvh:false,mark:false};
+  function applyExperiments(){
+    const root=document.documentElement;
+    if(exp.tc){document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.remove());}
+    const vp=document.querySelector('meta[name="viewport"]');
+    if(vp)vp.content=exp.vp?'width=device-width, initial-scale=1, viewport-fit=cover':'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
+    let st=document.getElementById('ppd-exp-style');
+    if(!st){st=document.createElement('style');st.id='ppd-exp-style';document.head.appendChild(st);}
+    st.textContent=(exp.unfix?'html.ppd-ios{position:static!important;height:100%!important}body{position:fixed!important;inset:0!important}':'')+
+      (exp.lvh?'html,body,.app-shell,#startup-screen{height:100lvh!important;min-height:100lvh!important;bottom:auto!important}':'');
+    let m=document.getElementById('ppd-exp-mark');
+    if(exp.mark&&!m){m=document.createElement('div');m.id='ppd-exp-mark';m.style.cssText='position:fixed;left:0;right:0;bottom:0;height:6px;background:#ff0033;z-index:2147483646;pointer-events:none';document.body.appendChild(m);}
+    if(!exp.mark&&m)m.remove();
+    showViewportDebug();
   }
   function syncVisibleViewport(){
     visibleViewportFrame=0;
