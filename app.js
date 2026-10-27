@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.1.222: iOS full-edge shell without height bleed. */
+/* GitHub Pages PWA wrapper v1.0.1.223: iOS full-edge shell without height bleed. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.222';
-  const PWA_BUILD_NUMBER='222';
+  const PWA_VERSION='1.0.1.223';
+  const PWA_BUILD_NUMBER='223';
   const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -43,7 +43,9 @@
     root.classList.remove('ppd-extend-bottom');
     root.style.removeProperty('--ppd-full-height');
   }
+  const PPD_BOTTOM_EXTEND=false; // v223: iOS clips web content at the layout viewport, so stretching only hid the splash credits. Kept off.
   function applyIOSBottomExtension(root,orientation){
+    if(!PPD_BOTTOM_EXTEND){clearIOSBottomExtension(root);return;}
     const sw=window.screen&&window.screen.width||0, sh=window.screen&&window.screen.height||0;
     if(!sw||!sh){clearIOSBottomExtension(root);return;}
     const landscape=/landscape/i.test(orientation||'');
@@ -69,9 +71,16 @@
     probe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px)';
     document.body.appendChild(probe);
     const sab=probe.offsetHeight; probe.remove();
+    const lv=document.createElement('div');
+    lv.style.cssText='position:fixed;left:0;top:0;width:0;height:100lvh';
+    document.body.appendChild(lv); const lvh=lv.offsetHeight; lv.remove();
+    const bt=document.createElement('div');
+    bt.style.cssText='position:fixed;left:0;bottom:0;width:0;height:0';
+    document.body.appendChild(bt); const fixedBottom=Math.round(bt.getBoundingClientRect().bottom); bt.remove();
+    let man='-'; try{man=getComputedStyle(document.documentElement).getPropertyValue('--x')||'-';}catch(e){}
     box.textContent=['inner '+innerWidth+'x'+innerHeight,'visual '+(vv?Math.round(vv.height):'-'),
       'screen '+screen.width+'x'+screen.height,'html.clientH '+root.clientHeight,
-      'safe-bottom '+sab,'extend '+root.classList.contains('ppd-extend-bottom')+' '+(root.style.getPropertyValue('--ppd-full-height')||'-')].join('\n');
+      'safe-bottom '+sab,'100lvh '+lvh+'  fixed-bottom '+fixedBottom,'outer '+outerWidth+'x'+outerHeight+' dpr '+devicePixelRatio,'standalone nav='+navigator.standalone+' mq='+matchMedia('(display-mode: standalone)').matches+' ver 223','extend '+root.classList.contains('ppd-extend-bottom')+' '+(root.style.getPropertyValue('--ppd-full-height')||'-')].join('\n');
   }
   function syncVisibleViewport(){
     visibleViewportFrame=0;
