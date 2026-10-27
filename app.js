@@ -522,7 +522,7 @@
       registration.active?'Active':'Registered';
     return {version:PWA_VERSION,buildNumber:PWA_BUILD_NUMBER,releaseDate:PWA_RELEASE_DATE,
       serviceWorkerStatus,installationStatus:standalone()?'Installed PWA (standalone)':'Browser mode',
-      lastSuccessfulUpdate,updateAvailable:!!pendingWorker,online:!!navigator.onLine};
+      installPromptAvailable:!!deferredInstall,lastSuccessfulUpdate,updateAvailable:!!pendingWorker,online:!!navigator.onLine};
   }
   function sendPwaInfo(){postToGAS('PPD_PWA_INFO',pwaInfoPayload());}
 
@@ -844,7 +844,7 @@
     catch(e){setDetails('Local test failed: '+String(e.message||e));if(inlinePushVisible)postToGAS('PPD_PUSH_INLINE_RESULT',{userId:currentUserId,ok:false,message:'Local test failed: '+String(e.message||e).slice(0,120)});}
   });
   testReal.addEventListener('click',()=>{postToGAS('PPD_PUSH_TEST');setDetails('Requesting a real Push test from the authenticated booking app\u2026');});
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;install.hidden=false;});
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;install.hidden=false;sendPwaInfo();});
   install.addEventListener('click',async()=>{
     if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;install.hidden=true;sendPwaInfo();}
     else if(isIOS){$('ios-install-tip').hidden=false;}
@@ -852,7 +852,7 @@
   if(installGuideClose)installGuideClose.addEventListener('click',()=>installGuideDialog.close());
   if(installGuideDone)installGuideDone.addEventListener('click',()=>installGuideDialog.close());
   if(installGuideDialog)installGuideDialog.addEventListener('click',e=>{if(e.target===installGuideDialog)installGuideDialog.close();});
-  window.addEventListener('appinstalled',()=>{install.hidden=true;deferredInstall=null;sendPwaInfo();pushInlineStatus();});
+  window.addEventListener('appinstalled',()=>{install.hidden=true;deferredInstall=null;postToGAS('PPD_INSTALL_RESULT',{installed:true,platform:isIOS?'IOS':'OTHER'});sendPwaInfo();pushInlineStatus();});
   window.addEventListener('online',()=>{$('offline-note').hidden=true;sendPwaInfo();});
   window.addEventListener('offline',()=>{$('offline-note').hidden=false;sendPwaInfo();});
   $('offline-note').hidden=navigator.onLine;
