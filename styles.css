@@ -56,6 +56,21 @@ dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 38px);overfl
   html.ppd-ios.ppd-standalone #startup-screen{
     top:0;bottom:0;height:auto;min-height:0;
   }
+  /* iOS installed-app bottom gap: JS adds .ppd-extend-bottom and sets
+     --ppd-full-height to the physical screen height when the layout viewport
+     ends above the real bottom edge. Everything that paints a surface (page
+     background, shell, splash) is stretched to that edge. Removed while the
+     keyboard is open. */
+  html.ppd-ios.ppd-standalone.ppd-extend-bottom,
+  html.ppd-ios.ppd-standalone.ppd-extend-bottom body{
+    bottom:auto;height:var(--ppd-full-height);min-height:var(--ppd-full-height);
+  }
+  html.ppd-ios.ppd-standalone.ppd-extend-bottom .app-shell{
+    top:0;bottom:auto;height:var(--ppd-full-height);
+  }
+  html.ppd-ios.ppd-standalone.ppd-extend-bottom #startup-screen{
+    top:0;bottom:auto;height:var(--ppd-full-height);min-height:var(--ppd-full-height);
+  }
 }
 
 @media (max-width:900px) and (display-mode:standalone){

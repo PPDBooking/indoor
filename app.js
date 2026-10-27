@@ -37,10 +37,46 @@
   // Android and browser (non-standalone) handling remains as in v217/v219.
   const mobileViewportQuery=window.matchMedia('(max-width: 900px)');
   let visibleViewportFrame=0, iosUnobstructedHeight=0, iosViewportOrientation='';
+  const IOS_MAX_BOTTOM_GAP=140; // sanity limit (CSS px) for the missing strip
+  function clearIOSBottomExtension(root){
+    root.classList.remove('ppd-extend-bottom');
+    root.style.removeProperty('--ppd-full-height');
+  }
+  function applyIOSBottomExtension(root,orientation){
+    const sw=window.screen&&window.screen.width||0, sh=window.screen&&window.screen.height||0;
+    if(!sw||!sh){clearIOSBottomExtension(root);return;}
+    const landscape=/landscape/i.test(orientation||'');
+    const physical=landscape?Math.min(sw,sh):Math.max(sw,sh);
+    const gap=physical-(window.innerHeight||0);
+    if(gap>=1&&gap<=IOS_MAX_BOTTOM_GAP){
+      root.style.setProperty('--ppd-full-height',Math.round(physical)+'px');
+      root.classList.add('ppd-extend-bottom');
+    }else clearIOSBottomExtension(root);
+  }
+  function showViewportDebug(){
+    // Add ?ppddebug=1 to the URL to print the numbers behind the bottom gap.
+    if(!/[?&]ppddebug=1/.test(location.search))return;
+    let box=document.getElementById('ppd-viewport-debug');
+    if(!box){
+      box=document.createElement('pre');
+      box.id='ppd-viewport-debug';
+      box.style.cssText='position:fixed;z-index:2147483647;left:6px;right:6px;top:calc(env(safe-area-inset-top,0px) + 4px);margin:0;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,.78);color:#9dffb5;font:11px/1.35 ui-monospace,Menlo,monospace;pointer-events:none;white-space:pre-wrap';
+      document.body.appendChild(box);
+    }
+    const root=document.documentElement, vv=window.visualViewport;
+    const probe=document.createElement('div');
+    probe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px)';
+    document.body.appendChild(probe);
+    const sab=probe.offsetHeight; probe.remove();
+    box.textContent=['inner '+innerWidth+'x'+innerHeight,'visual '+(vv?Math.round(vv.height):'-'),
+      'screen '+screen.width+'x'+screen.height,'html.clientH '+root.clientHeight,
+      'safe-bottom '+sab,'extend '+root.classList.contains('ppd-extend-bottom')+' '+(root.style.getPropertyValue('--ppd-full-height')||'-')].join('\n');
+  }
   function syncVisibleViewport(){
     visibleViewportFrame=0;
     const root=document.documentElement;
     if(!mobileViewportQuery.matches){
+      clearIOSBottomExtension(root);
       root.style.removeProperty('--ppd-visible-height');
       root.style.removeProperty('--ppd-visible-top');
       root.style.removeProperty('--ppd-visible-bottom');
@@ -64,13 +100,18 @@
       const keyboardOpen=reference-(height+top)>Math.max(150,reference*.2);
       if(!keyboardOpen){
         iosUnobstructedHeight=Math.max(reference,height+top);
-        // Use the original viewport edges rather than imposing a numerical
-        // height. No screen-height inflation or home-indicator padding.
         root.style.removeProperty('--ppd-visible-height');
         root.style.removeProperty('--ppd-visible-top');
         root.style.removeProperty('--ppd-visible-bottom');
+        // Installed iOS PWAs can report a layout viewport that ends above the
+        // physical bottom edge, leaving an empty strip (green on the splash,
+        // grey in the app). Stretch html/body/shell/splash down to the real
+        // screen edge. The Apps Script keeps owning its own dock gap.
+        applyIOSBottomExtension(root,orientation);
         return;
       }
+      // Keyboard open: shrink back to the genuinely visible region.
+      clearIOSBottomExtension(root);
     }
     // For an open iOS keyboard, temporarily size the shell to the visible
     // region; the lower edge anchor is restored when the keyboard closes.
@@ -79,9 +120,10 @@
     root.style.setProperty('--ppd-visible-top',Math.round(top)+'px');
   }
   function scheduleVisibleViewportSync(){
-    if(!visibleViewportFrame)visibleViewportFrame=requestAnimationFrame(syncVisibleViewport);
+    if(!visibleViewportFrame)visibleViewportFrame=requestAnimationFrame(()=>{syncVisibleViewport();showViewportDebug();});
   }
   syncVisibleViewport();
+  showViewportDebug();
   window.addEventListener('resize',scheduleVisibleViewportSync,{passive:true});
   window.addEventListener('orientationchange',scheduleVisibleViewportSync,{passive:true});
   window.addEventListener('pageshow',scheduleVisibleViewportSync,{passive:true});
