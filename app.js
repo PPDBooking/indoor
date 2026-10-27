@@ -1,18 +1,24 @@
-/* GitHub Pages PWA wrapper v1.0.1.224: iOS full-height shell (html static + 100lvh). */
+/* GitHub Pages PWA wrapper v1.0.1.225: iOS full-height shell (html static + 100lvh). */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.224';
-  const PWA_BUILD_NUMBER='224';
-  const PWA_RELEASE_DATE='2026-10-26';
+  const PWA_VERSION='1.0.1.225';
+  const PWA_BUILD_NUMBER='225';
+  const PWA_RELEASE_DATE='2026-10-27';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
   const enable = $('enable-notifications-button');
   const testLocal = $('test-notification-button');
   const testReal = $('real-notification-test-button');
   const install = $('install-button');
+  const installGuideDialog = $('install-guide-dialog');
+  const installGuideTitle = $('install-guide-title');
+  const installGuideMessage = $('install-guide-message');
+  const installGuideSteps = $('install-guide-steps');
+  const installGuideClose = $('install-guide-close');
+  const installGuideDone = $('install-guide-done');
   const details = $('notification-details');
   const delivery = $('push-delivery-status');
   const permissionLabel = $('permission-status');
@@ -519,6 +525,52 @@
       lastSuccessfulUpdate,updateAvailable:!!pendingWorker,online:!!navigator.onLine};
   }
   function sendPwaInfo(){postToGAS('PPD_PWA_INFO',pwaInfoPayload());}
+
+  function openInstallGuide(platform){
+    if(standalone()){
+      install.hidden=true;
+      postToGAS('PPD_INSTALL_RESULT',{installed:true,platform:platform||'OTHER'});
+      return;
+    }
+    const ios = platform==='IOS' || isIOS;
+    if(installGuideTitle)installGuideTitle.textContent=ios?'Install on iPhone or iPad':'Install Point Pedro Indoor Court';
+    if(installGuideMessage)installGuideMessage.textContent=ios
+      ?'Apple requires you to add this website to the Home Screen manually. The app cannot install itself or skip the system confirmation.'
+      :'If the install prompt is not available, use your browser menu to install this app or add it to your Home Screen.';
+    if(installGuideSteps){
+      installGuideSteps.innerHTML=ios
+        ?'<li>Open this site in Safari.</li><li>Tap the Share button.</li><li>Choose <strong>Add to Home Screen</strong>.</li><li>Tap <strong>Add</strong>, then open the new Home Screen icon.</li>'
+        :(/android/i.test(navigator.userAgent)
+          ?'<li>Open this site in Chrome.</li><li>Open the browser menu (⋮).</li><li>Choose <strong>Install app</strong> or <strong>Add to Home screen</strong>.</li><li>Confirm the installation.</li>'
+          :'<li>Open your browser menu.</li><li>Choose <strong>Install app</strong> or <strong>Add to Home screen</strong>, if offered.</li><li>Follow the browser confirmation.</li>');
+    }
+    if(installGuideDialog&&!installGuideDialog.open)installGuideDialog.showModal();
+    postToGAS('PPD_INSTALL_RESULT',{installed:false,manual:true,platform:ios?'IOS':(/android/i.test(navigator.userAgent)?'ANDROID':'OTHER')});
+  }
+  async function requestInstallFromSettings(platform){
+    if(standalone()){
+      install.hidden=true;
+      postToGAS('PPD_INSTALL_RESULT',{installed:true,platform:platform||'OTHER'});
+      sendPwaInfo();
+      return;
+    }
+    if(deferredInstall&&!isIOS){
+      const promptEvent=deferredInstall;
+      deferredInstall=null;
+      try{
+        await promptEvent.prompt();
+        const choice=await promptEvent.userChoice;
+        if(choice&&choice.outcome==='accepted')install.hidden=true;
+        postToGAS('PPD_INSTALL_RESULT',{installed:standalone(),accepted:!!(choice&&choice.outcome==='accepted'),outcome:choice&&choice.outcome||'unknown',platform:platform||'OTHER'});
+        sendPwaInfo();
+        return;
+      }catch(error){
+        openInstallGuide(platform||'OTHER');
+        return;
+      }
+    }
+    openInstallGuide(platform|| (isIOS?'IOS':'OTHER'));
+  }
   function requestAuthResync(){
     // The script.google.com outer iframe can contain a nested googleusercontent frame.
     // Both receive a query; only the trusted GAS UI is allowed to answer.
@@ -642,7 +694,13 @@
     if(gasWindow && event.source!==gasWindow)return;
     if(!gasWindow){gasWindow=event.source;gasOrigin=event.origin;}
     const d=event.data;
-    if(d.type==='PPD_PUSH_INLINE_VIEW'){
+    if(d.type==='PPD_INSTALL_REQUEST'){
+      if(d.userId&&currentUserId&&String(d.userId)!==currentUserId)return;
+      requestInstallFromSettings(String(d.platform|| (isIOS?'IOS':'OTHER'))).catch(error=>{
+        postToGAS('PPD_INSTALL_RESULT',{installed:standalone(),ok:false,error:String(error&&error.message||error).slice(0,160)});
+      });
+      return;
+    }else if(d.type==='PPD_PUSH_INLINE_VIEW'){
       inlinePushVisible=!!(d.visible&&authReady&&currentUserId&&String(d.userId||'')===currentUserId);
       if(!inlinePushVisible){inlinePushSlot=null;inlinePushNative.hidden=true;}
       else{refreshUI();if(hasApis()&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);}
@@ -788,9 +846,12 @@
   testReal.addEventListener('click',()=>{postToGAS('PPD_PUSH_TEST');setDetails('Requesting a real Push test from the authenticated booking app\u2026');});
   window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;install.hidden=false;});
   install.addEventListener('click',async()=>{
-    if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;install.hidden=true;}
+    if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;install.hidden=true;sendPwaInfo();}
     else if(isIOS){$('ios-install-tip').hidden=false;}
   });
+  if(installGuideClose)installGuideClose.addEventListener('click',()=>installGuideDialog.close());
+  if(installGuideDone)installGuideDone.addEventListener('click',()=>installGuideDialog.close());
+  if(installGuideDialog)installGuideDialog.addEventListener('click',e=>{if(e.target===installGuideDialog)installGuideDialog.close();});
   window.addEventListener('appinstalled',()=>{install.hidden=true;deferredInstall=null;sendPwaInfo();pushInlineStatus();});
   window.addEventListener('online',()=>{$('offline-note').hidden=true;sendPwaInfo();});
   window.addEventListener('offline',()=>{$('offline-note').hidden=false;sendPwaInfo();});

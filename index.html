@@ -76,9 +76,9 @@
       }
     }
   </style>
-  <link rel="stylesheet" href="./styles.css?v=1.0.1.224">
+  <link rel="stylesheet" href="./styles.css?v=1.0.1.225">
   <title>Point Pedro Indoor Court</title>
-  <script src="./app.js?v=1.0.1.224" defer></script>
+  <script src="./app.js?v=1.0.1.225" defer></script>
 </head>
 <body>
   <div class="app-shell">
@@ -155,6 +155,20 @@
       <button id="test-notification-button" class="secondary-button" type="button" disabled>Show a local test notification</button>
       <p class="fine-print">Local tests prove device permission. Real booking alerts require the private GitHub Actions secrets and Apps Script configuration described in README. Do not treat permissions alone as connected delivery.</p>
       <div id="ios-install-tip" class="ios-install-tip" hidden>On iPhone: open this site in Safari, tap <strong>Share &#x2192; Add to Home Screen</strong>, then launch the installed app and choose Enable notifications.</div>
+    </div>
+  </dialog>
+  <dialog id="install-guide-dialog" aria-labelledby="install-guide-title">
+    <div class="dialog-header">
+      <div class="dialog-heading">
+        <div class="dialog-icon" aria-hidden="true">&#x2B07;</div>
+        <div><h1 id="install-guide-title">Install Point Pedro Indoor Court</h1><p>Install this app on your device</p></div>
+      </div>
+      <button id="install-guide-close" class="close-button" type="button" aria-label="Close install guide">&#xD7;</button>
+    </div>
+    <div class="dialog-body">
+      <p id="install-guide-message" class="support-text">Follow the steps for your device.</p>
+      <ol id="install-guide-steps" class="install-guide-steps"></ol>
+      <button id="install-guide-done" class="secondary-button" type="button">Done</button>
     </div>
   </dialog>
 </body>
