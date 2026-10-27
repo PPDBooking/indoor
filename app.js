@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.1.223: iOS full-edge shell without height bleed. */
+/* GitHub Pages PWA wrapper v1.0.1.224: iOS full-height shell (html static + 100lvh). */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.223';
-  const PWA_BUILD_NUMBER='223';
+  const PWA_VERSION='1.0.1.224';
+  const PWA_BUILD_NUMBER='224';
   const PWA_RELEASE_DATE='2026-10-26';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -37,77 +37,11 @@
   // Android and browser (non-standalone) handling remains as in v217/v219.
   const mobileViewportQuery=window.matchMedia('(max-width: 900px)');
   let visibleViewportFrame=0, iosUnobstructedHeight=0, iosViewportOrientation='';
-  const PPD_VIEWPORT_DEBUG=true; // TEST BUILD: shows height numbers on screen. Set to false once the gap is fixed.
-  const IOS_MAX_BOTTOM_GAP=140; // sanity limit (CSS px) for the missing strip
-  function clearIOSBottomExtension(root){
-    root.classList.remove('ppd-extend-bottom');
-    root.style.removeProperty('--ppd-full-height');
-  }
-  const PPD_BOTTOM_EXTEND=false; // v223: iOS clips web content at the layout viewport, so stretching only hid the splash credits. Kept off.
-  function applyIOSBottomExtension(root,orientation){
-    if(!PPD_BOTTOM_EXTEND){clearIOSBottomExtension(root);return;}
-    const sw=window.screen&&window.screen.width||0, sh=window.screen&&window.screen.height||0;
-    if(!sw||!sh){clearIOSBottomExtension(root);return;}
-    const landscape=/landscape/i.test(orientation||'');
-    const physical=landscape?Math.min(sw,sh):Math.max(sw,sh);
-    const gap=physical-(window.innerHeight||0);
-    if(gap>=1&&gap<=IOS_MAX_BOTTOM_GAP){
-      root.style.setProperty('--ppd-full-height',Math.round(physical)+'px');
-      root.classList.add('ppd-extend-bottom');
-    }else clearIOSBottomExtension(root);
-  }
-  function showViewportDebug(){
-    // Add ?ppddebug=1 to the URL to print the numbers behind the bottom gap.
-    if(!PPD_VIEWPORT_DEBUG&&!/[?&]ppddebug=1/.test(location.search))return;
-    let box=document.getElementById('ppd-viewport-debug');
-    if(!box){
-      box=document.createElement('div');
-      box.id='ppd-viewport-debug';
-      box.style.cssText='position:fixed;z-index:2147483647;left:6px;right:6px;top:calc(env(safe-area-inset-top,0px) + 4px);margin:0;padding:6px 8px;border-radius:8px;background:rgba(0,0,0,.78);color:#9dffb5;font:11px/1.35 ui-monospace,Menlo,monospace;pointer-events:none;white-space:pre-wrap';
-      document.body.appendChild(box);
-      const bar=document.createElement('div');bar.id='ppd-exp-bar';bar.style.cssText='display:flex;flex-wrap:wrap;gap:4px;margin-top:5px;pointer-events:auto';
-      [['tc','no theme-color'],['vp','plain viewport'],['unfix','html not fixed'],['lvh','100lvh'],['mark','red line']].forEach(([k,t])=>{const b=document.createElement('button');b.type='button';b.dataset.k=k;b.textContent=t;b.style.cssText='font:11px system-ui;padding:4px 7px;border-radius:6px;border:1px solid #9dffb5;background:#123;color:#9dffb5';b.addEventListener('click',()=>{exp[k]=!exp[k];applyExperiments();});bar.appendChild(b);});
-      box.appendChild(bar);
-      const txt=document.createElement('pre');txt.id='ppd-exp-text';txt.style.cssText='margin:0;font:inherit;white-space:pre-wrap';box.insertBefore(txt,bar);
-    }
-    const root=document.documentElement, vv=window.visualViewport;
-    const probe=document.createElement('div');
-    probe.style.cssText='position:fixed;left:0;top:0;width:0;height:0;padding-bottom:env(safe-area-inset-bottom,0px)';
-    document.body.appendChild(probe);
-    const sab=probe.offsetHeight; probe.remove();
-    const lv=document.createElement('div');
-    lv.style.cssText='position:fixed;left:0;top:0;width:0;height:100lvh';
-    document.body.appendChild(lv); const lvh=lv.offsetHeight; lv.remove();
-    const bt=document.createElement('div');
-    bt.style.cssText='position:fixed;left:0;bottom:0;width:0;height:0';
-    document.body.appendChild(bt); const fixedBottom=Math.round(bt.getBoundingClientRect().bottom); bt.remove();
-    let man='-'; try{man=getComputedStyle(document.documentElement).getPropertyValue('--x')||'-';}catch(e){}
-    const on=Object.keys(exp).filter(k=>exp[k]).join(',')||'none';
-    box.querySelector('#ppd-exp-text').textContent=['ON: '+on,'inner '+innerWidth+'x'+innerHeight,'visual '+(vv?Math.round(vv.height):'-'),
-      'screen '+screen.width+'x'+screen.height,'html.clientH '+root.clientHeight,
-      'safe-bottom '+sab,'100lvh '+lvh+'  fixed-bottom '+fixedBottom,'outer '+outerWidth+'x'+outerHeight+' dpr '+devicePixelRatio,'standalone nav='+navigator.standalone+' mq='+matchMedia('(display-mode: standalone)').matches+' ver 223','extend '+root.classList.contains('ppd-extend-bottom')].join('\n');
-  }
-  // ---- TEST BUILD: live experiments to find what leaves the bottom strip. ----
-  const exp={tc:false,vp:false,unfix:false,lvh:false,mark:false};
-  function applyExperiments(){
-    const root=document.documentElement;
-    if(exp.tc){document.querySelectorAll('meta[name="theme-color"]').forEach(m=>m.remove());}
-    const vp=document.querySelector('meta[name="viewport"]');
-    if(vp)vp.content=exp.vp?'width=device-width, initial-scale=1, viewport-fit=cover':'width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover';
-    let st=document.getElementById('ppd-exp-style');
-    if(!st){st=document.createElement('style');st.id='ppd-exp-style';document.head.appendChild(st);}
-    st.textContent=(exp.unfix?'html.ppd-ios{position:static!important;height:100%!important}body{position:fixed!important;inset:0!important}':'')+
-      (exp.lvh?'html,body,.app-shell,#startup-screen{height:100lvh!important;min-height:100lvh!important;bottom:auto!important}':'');
-    let m=document.getElementById('ppd-exp-mark');
-    if(exp.mark&&!m){m=document.createElement('div');m.id='ppd-exp-mark';m.style.cssText='position:fixed;left:0;right:0;bottom:0;height:6px;background:#ff0033;z-index:2147483646;pointer-events:none';document.body.appendChild(m);}
-    if(!exp.mark&&m)m.remove();
-    showViewportDebug();
-  }
   function syncVisibleViewport(){
     visibleViewportFrame=0;
     const root=document.documentElement;
     if(!mobileViewportQuery.matches){
-      clearIOSBottomExtension(root);
+      root.classList.remove('ppd-fill-lvh');
       root.style.removeProperty('--ppd-visible-height');
       root.style.removeProperty('--ppd-visible-top');
       root.style.removeProperty('--ppd-visible-bottom');
@@ -131,19 +65,19 @@
       const keyboardOpen=reference-(height+top)>Math.max(150,reference*.2);
       if(!keyboardOpen){
         iosUnobstructedHeight=Math.max(reference,height+top);
+        // Installed iOS PWAs can otherwise stop ~60px above the real screen
+        // bottom (empty strip under the splash and app). Sizing the page with
+        // 100lvh and a non-fixed <html> makes iOS grow the layout viewport to
+        // the full screen on every iPhone model, with no hard-coded heights.
+        root.classList.add('ppd-fill-lvh');
         root.style.removeProperty('--ppd-visible-height');
         root.style.removeProperty('--ppd-visible-top');
         root.style.removeProperty('--ppd-visible-bottom');
-        // Installed iOS PWAs can report a layout viewport that ends above the
-        // physical bottom edge, leaving an empty strip (green on the splash,
-        // grey in the app). Stretch html/body/shell/splash down to the real
-        // screen edge. The Apps Script keeps owning its own dock gap.
-        applyIOSBottomExtension(root,orientation);
         return;
       }
-      // Keyboard open: shrink back to the genuinely visible region.
-      clearIOSBottomExtension(root);
     }
+    // Keyboard open: drop the full-height rule so the shell fits what is visible.
+    root.classList.remove('ppd-fill-lvh');
     // For an open iOS keyboard, temporarily size the shell to the visible
     // region; the lower edge anchor is restored when the keyboard closes.
     if(isIOS&&standalone())root.style.setProperty('--ppd-visible-bottom','auto');
@@ -151,10 +85,9 @@
     root.style.setProperty('--ppd-visible-top',Math.round(top)+'px');
   }
   function scheduleVisibleViewportSync(){
-    if(!visibleViewportFrame)visibleViewportFrame=requestAnimationFrame(()=>{syncVisibleViewport();showViewportDebug();});
+    if(!visibleViewportFrame)visibleViewportFrame=requestAnimationFrame(syncVisibleViewport);
   }
   syncVisibleViewport();
-  showViewportDebug();
   window.addEventListener('resize',scheduleVisibleViewportSync,{passive:true});
   window.addEventListener('orientationchange',scheduleVisibleViewportSync,{passive:true});
   window.addEventListener('pageshow',scheduleVisibleViewportSync,{passive:true});
