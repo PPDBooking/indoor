@@ -4,11 +4,23 @@
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.224';
-  const PWA_BUILD_NUMBER='224';
-  const PWA_RELEASE_DATE='2026-10-26';
+  const PWA_VERSION='1.0.1.225';
+  const PWA_BUILD_NUMBER='225';
+  const PWA_RELEASE_DATE='2026-10-28';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
+  // A developer-only display preference. Notification registration is unaffected.
+  let floatingBellDeveloperId='',floatingBellVisible=true;
+  function currentBellVisible(){return !(floatingBellDeveloperId&&floatingBellDeveloperId===currentUserId&&floatingBellVisible===false);}
+  function restoreDeveloperBellPreference(){
+    // The preference follows the signed-in developer on this browser, never another account.
+    floatingBellDeveloperId='';floatingBellVisible=true;
+    if(!currentUserId)return;
+    try{const key='ppd_floating_bell_visibility:'+currentUserId;
+      const saved=localStorage.getItem(key);if(saved==='false'||saved==='true'){floatingBellDeveloperId=currentUserId;floatingBellVisible=saved!=='false';}
+    }catch(_){ }
+  }
+
   const enable = $('enable-notifications-button');
   const testLocal = $('test-notification-button');
   const testReal = $('real-notification-test-button');
@@ -516,7 +528,7 @@
       registration.active?'Active':'Registered';
     return {version:PWA_VERSION,buildNumber:PWA_BUILD_NUMBER,releaseDate:PWA_RELEASE_DATE,
       serviceWorkerStatus,installationStatus:standalone()?'Installed PWA (standalone)':'Browser mode',
-      lastSuccessfulUpdate,updateAvailable:!!pendingWorker,online:!!navigator.onLine};
+      lastSuccessfulUpdate,updateAvailable:!!pendingWorker,online:!!navigator.onLine,installAvailable:!!deferredInstall,isIOS};
   }
   function sendPwaInfo(){postToGAS('PPD_PWA_INFO',pwaInfoPayload());}
   function requestAuthResync(){
@@ -600,7 +612,7 @@
     testReal.disabled=!(deviceRegistered&&pushReady&&authReady);
     delivery.textContent=deviceRegistered?(pushReady?'Device linked \u00b7 sender enabled':'Device linked \u00b7 sender not configured'):'Not connected';
     // Setup launcher disappears after the device has been registered; open ?notifications=1 to manage later.
-    setup.hidden=deviceRegistered&&pushReady || new URLSearchParams(location.search).has('hidesetup');
+    setup.hidden=(!currentBellVisible()) || deviceRegistered&&pushReady || new URLSearchParams(location.search).has('hidesetup');
     $('ios-install-tip').hidden=!isIOS||standalone();
     if(!preserveDetails){
       if(!hasApis())setDetails('This browser cannot use Web Push. Use HTTPS on a supported browser.');
@@ -684,6 +696,26 @@
       if(d.remembered===true)storeRememberedSession(d.token,d.userId);
     }else if(d.type==='PPD_SESSION_CLEAR'){
       clearSavedSession();
+    }else if(d.type==='PPD_FLOATING_BELL_VISIBILITY'){
+      // The GAS message is from the origin/source already authenticated above.
+      // Only an authenticated developer can set this preference in the GAS UI.
+      if(!authReady||!currentUserId||d.role!=='developer'||String(d.userId||'')!==currentUserId)return;
+      floatingBellDeveloperId=currentUserId;floatingBellVisible=d.visible!==false;
+      try{localStorage.setItem('ppd_floating_bell_visibility:'+currentUserId,String(floatingBellVisible));}catch(_){ }
+      refreshUI(true);return;
+    }else if(d.type==='PPD_INSTALL_REQUEST'){
+      if(!authReady||!currentUserId||String(d.userId||'')!==currentUserId)return;
+      if(standalone()){sendPwaInfo();return;}
+      // Install prompts must run from a TOP-LEVEL user click, not a cross-origin iframe.
+      // Show the wrapper's own native install button in a dialog for that click.
+      install.hidden=!deferredInstall;
+      $('ios-install-tip').hidden=!isIOS;
+      setRegistrationDialogMode(false);
+      refreshUI(true);
+      if(isIOS)setDetails('In Safari tap Share, then Add to Home Screen. iPhone installation cannot be started directly by a webpage.');
+      else setDetails(deferredInstall?'Tap Install court app below to install.':'Your browser has not offered installation yet. Use the browser Install menu, or open this site in Chrome.');
+      if(!dialog.open)dialog.showModal();
+      return;
     }else if(d.type==='PPD_DISPLAY_SETTINGS'){
       const userId=String(d.userId||'');
       if(userId){
@@ -718,8 +750,7 @@
       const wasAuthenticated=authReady, previousUser=currentUserId;
       authReady=!!d.authenticated;
       currentUserId=authReady?String(d.userId||''):'';
-      if(authReady)restoreDisplayPreferenceForUser(currentUserId,d.displayPreferences);
-      else applyDisplayPreference(DEFAULT_DISPLAY_PREFERENCE);
+      if(authReady){restoreDisplayPreferenceForUser(currentUserId,d.displayPreferences);restoreDeveloperBellPreference();}else{floatingBellDeveloperId='';floatingBellVisible=true;applyDisplayPreference(DEFAULT_DISPLAY_PREFERENCE);}
       if(authReady && (!wasAuthenticated || previousUser!==currentUserId)){
         bioUnlockGranted=!!(bioUnlockedForUser&&bioUnlockedForUser===currentUserId);
         deviceRegistered=false;pushReady=false;registrationPromptShownForUser='';registrationCheckPendingUser='';
@@ -786,9 +817,9 @@
     catch(e){setDetails('Local test failed: '+String(e.message||e));if(inlinePushVisible)postToGAS('PPD_PUSH_INLINE_RESULT',{userId:currentUserId,ok:false,message:'Local test failed: '+String(e.message||e).slice(0,120)});}
   });
   testReal.addEventListener('click',()=>{postToGAS('PPD_PUSH_TEST');setDetails('Requesting a real Push test from the authenticated booking app\u2026');});
-  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;install.hidden=false;});
+  window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredInstall=e;install.hidden=false;sendPwaInfo();});
   install.addEventListener('click',async()=>{
-    if(deferredInstall){deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;install.hidden=true;}
+    if(deferredInstall){await deferredInstall.prompt();await deferredInstall.userChoice;deferredInstall=null;install.hidden=true;sendPwaInfo();if(dialog.open)dialog.close();}
     else if(isIOS){$('ios-install-tip').hidden=false;}
   });
   window.addEventListener('appinstalled',()=>{install.hidden=true;deferredInstall=null;sendPwaInfo();pushInlineStatus();});
