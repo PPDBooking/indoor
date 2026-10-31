@@ -4,9 +4,9 @@
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.225';
-  const PWA_BUILD_NUMBER='225';
-  const PWA_RELEASE_DATE='2026-10-28';
+  const PWA_VERSION='1.0.1.227';
+  const PWA_BUILD_NUMBER='227';
+  const PWA_RELEASE_DATE='2026-10-31';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
   // A developer-only display preference. Notification registration is unaffected.
@@ -36,9 +36,19 @@
   // page is shown, then restore the existing light header colour. This only
   // paints the OS-owned area; it does not reposition any app element.
   const themeColorMeta=document.querySelector('meta[name="theme-color"]');
+  const staffThemeRoles=['developer','super_admin','admin','booking_manager','treasurer'];
+  let staffThemeEnabled=false,staffThemeDark=false;
+  let pendingStaffTheme={userId:'',role:'',mode:'LIGHT'};
   function setIOSSystemBackdrop(splashActive){
-    if(isIOS&&standalone()&&themeColorMeta)
-      themeColorMeta.content=splashActive?'#075b43':'#f3f6f8';
+    const color=splashActive?'#075b43':(staffThemeEnabled?(staffThemeDark?'#071e17':'#075b43'):'#f3f6f8');
+    if(themeColorMeta)themeColorMeta.content=color;
+    document.documentElement.style.setProperty('--ppd-system-backdrop',color);
+    // Only an authenticated staff theme changes the OS/document backdrop.
+    // Player Portal keeps its existing light status-bar colour until rollout.
+    if(isIOS&&standalone()){
+      document.documentElement.style.backgroundColor=color;
+      document.body.style.backgroundColor=color;
+    }
   }
   setIOSSystemBackdrop(true);
   // The booking iframe and splash share one CSS viewport. iOS may report a
@@ -112,8 +122,13 @@
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
   let gasWindow = null, gasOrigin = '', currentUserId = '';
   const DISPLAY_PREFERENCE_PREFIX='ppd_mobile_display_settings_v2:';
-  const DEFAULT_DISPLAY_PREFERENCE={safeArea:false};
-  const normalizeDisplayPreference=value=>({safeArea:!!(value&&value.safeArea===true)});
+  const DEFAULT_DISPLAY_PREFERENCE={safeArea:false,bottomGap:16};
+  const normalizeDisplayPreference=value=>{
+    const raw=value&&value.bottomGap;
+    const parsed=raw===undefined||raw===null||raw===''?16:Number(raw);
+    const bottomGap=Number.isFinite(parsed)?Math.max(8,Math.min(48,Math.round(parsed))):16;
+    return {safeArea:!!(value&&value.safeArea===true),bottomGap};
+  };
   function displayPreferenceKey(userId){return DISPLAY_PREFERENCE_PREFIX+String(userId||'');}
   function readDisplayPreference(userId){
     if(!userId)return null;
@@ -126,12 +141,17 @@
   function applyDisplayPreference(value){
     const preference=normalizeDisplayPreference(value);
     document.documentElement.classList.toggle('ppd-safe-area-on',preference.safeArea);
+    document.documentElement.style.setProperty('--ppd-dock-gap',preference.bottomGap+'px');
     return preference;
   }
   function restoreDisplayPreferenceForUser(userId,gasPreference){
     if(!userId)return;
+    const saved=readDisplayPreference(userId)||DEFAULT_DISPLAY_PREFERENCE;
     const preference=gasPreference&&typeof gasPreference==='object'
-      ?normalizeDisplayPreference(gasPreference):(readDisplayPreference(userId)||DEFAULT_DISPLAY_PREFERENCE);
+      ?normalizeDisplayPreference({
+          safeArea:gasPreference.safeArea===undefined?saved.safeArea:gasPreference.safeArea,
+          bottomGap:gasPreference.bottomGap===undefined?saved.bottomGap:gasPreference.bottomGap
+        }):saved;
     saveDisplayPreference(userId,preference);
     applyDisplayPreference(preference);
     postToGAS('PPD_DISPLAY_PREFERENCE',{userId:String(userId),preferences:preference});
@@ -654,6 +674,17 @@
     if(gasWindow && event.source!==gasWindow)return;
     if(!gasWindow){gasWindow=event.source;gasOrigin=event.origin;}
     const d=event.data;
+    if(d.type==='PPD_THEME_STATE'){
+      const userId=String(d.userId||''),role=String(d.role||'').toLowerCase();
+      if(!userId||!staffThemeRoles.includes(role))return;
+      pendingStaffTheme={userId,role,mode:d.mode==='DARK'?'DARK':'LIGHT'};
+      if(authReady&&currentUserId===userId){
+        staffThemeEnabled=true;
+        staffThemeDark=pendingStaffTheme.mode==='DARK';
+        setIOSSystemBackdrop(false);
+      }
+      return;
+    }
     if(d.type==='PPD_PUSH_INLINE_VIEW'){
       inlinePushVisible=!!(d.visible&&authReady&&currentUserId&&String(d.userId||'')===currentUserId);
       if(!inlinePushVisible){inlinePushSlot=null;inlinePushNative.hidden=true;}
@@ -750,6 +781,13 @@
       const wasAuthenticated=authReady, previousUser=currentUserId;
       authReady=!!d.authenticated;
       currentUserId=authReady?String(d.userId||''):'';
+      if(authReady){
+        staffThemeEnabled=pendingStaffTheme.userId===currentUserId&&staffThemeRoles.includes(pendingStaffTheme.role);
+        staffThemeDark=staffThemeEnabled&&pendingStaffTheme.mode==='DARK';
+      }else{
+        staffThemeEnabled=false;staffThemeDark=false;pendingStaffTheme={userId:'',role:'',mode:'LIGHT'};
+      }
+      setIOSSystemBackdrop(false);
       if(authReady){restoreDisplayPreferenceForUser(currentUserId,d.displayPreferences);restoreDeveloperBellPreference();}else{floatingBellDeveloperId='';floatingBellVisible=true;applyDisplayPreference(DEFAULT_DISPLAY_PREFERENCE);}
       if(authReady && (!wasAuthenticated || previousUser!==currentUserId)){
         bioUnlockGranted=!!(bioUnlockedForUser&&bioUnlockedForUser===currentUserId);
@@ -772,7 +810,7 @@
     }else if(d.type==='PPD_BIO_SESSION_GONE'){
       // Expired GAS session requires password. Wait for GAS to finish loading the
       // public page before removing our startup shield; keep the opt-in preference.
-      authReady=false;currentUserId='';bioUnlockedForUser='';bioUnlockGranted=true;inlinePushVisible=false;inlinePushSlot=null;inlinePushNative.hidden=true;
+      authReady=false;currentUserId='';staffThemeEnabled=false;staffThemeDark=false;pendingStaffTheme={userId:'',role:'',mode:'LIGHT'};setIOSSystemBackdrop(false);bioUnlockedForUser='';bioUnlockGranted=true;inlinePushVisible=false;inlinePushSlot=null;inlinePushNative.hidden=true;
       registrationCheckPendingUser='';registrationPromptShownForUser='';deviceRegistered=false;pushReady=false;
       clearSavedSession();
       displayStartup('Your saved session expired. Opening sign-in\u2026');bioPresent();
