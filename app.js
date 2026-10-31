@@ -4,8 +4,8 @@
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.226';
-  const PWA_BUILD_NUMBER='226';
+  const PWA_VERSION='1.0.1.227';
+  const PWA_BUILD_NUMBER='227';
   const PWA_RELEASE_DATE='2026-10-31';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -42,6 +42,7 @@
   function setIOSSystemBackdrop(splashActive){
     const color=splashActive?'#075b43':(staffThemeEnabled?(staffThemeDark?'#071e17':'#075b43'):'#f3f6f8');
     if(themeColorMeta)themeColorMeta.content=color;
+    document.documentElement.style.setProperty('--ppd-system-backdrop',color);
     // Only an authenticated staff theme changes the OS/document backdrop.
     // Player Portal keeps its existing light status-bar colour until rollout.
     if(isIOS&&standalone()){
@@ -121,8 +122,13 @@
   let sw = null, vapidKey = '', authReady = false, deviceRegistered = false, pushReady = false, deferredInstall = null;
   let gasWindow = null, gasOrigin = '', currentUserId = '';
   const DISPLAY_PREFERENCE_PREFIX='ppd_mobile_display_settings_v2:';
-  const DEFAULT_DISPLAY_PREFERENCE={safeArea:false};
-  const normalizeDisplayPreference=value=>({safeArea:!!(value&&value.safeArea===true)});
+  const DEFAULT_DISPLAY_PREFERENCE={safeArea:false,bottomGap:16};
+  const normalizeDisplayPreference=value=>{
+    const raw=value&&value.bottomGap;
+    const parsed=raw===undefined||raw===null||raw===''?16:Number(raw);
+    const bottomGap=Number.isFinite(parsed)?Math.max(8,Math.min(48,Math.round(parsed))):16;
+    return {safeArea:!!(value&&value.safeArea===true),bottomGap};
+  };
   function displayPreferenceKey(userId){return DISPLAY_PREFERENCE_PREFIX+String(userId||'');}
   function readDisplayPreference(userId){
     if(!userId)return null;
@@ -135,12 +141,17 @@
   function applyDisplayPreference(value){
     const preference=normalizeDisplayPreference(value);
     document.documentElement.classList.toggle('ppd-safe-area-on',preference.safeArea);
+    document.documentElement.style.setProperty('--ppd-dock-gap',preference.bottomGap+'px');
     return preference;
   }
   function restoreDisplayPreferenceForUser(userId,gasPreference){
     if(!userId)return;
+    const saved=readDisplayPreference(userId)||DEFAULT_DISPLAY_PREFERENCE;
     const preference=gasPreference&&typeof gasPreference==='object'
-      ?normalizeDisplayPreference(gasPreference):(readDisplayPreference(userId)||DEFAULT_DISPLAY_PREFERENCE);
+      ?normalizeDisplayPreference({
+          safeArea:gasPreference.safeArea===undefined?saved.safeArea:gasPreference.safeArea,
+          bottomGap:gasPreference.bottomGap===undefined?saved.bottomGap:gasPreference.bottomGap
+        }):saved;
     saveDisplayPreference(userId,preference);
     applyDisplayPreference(preference);
     postToGAS('PPD_DISPLAY_PREFERENCE',{userId:String(userId),preferences:preference});
