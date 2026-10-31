@@ -36,15 +36,18 @@
   // page is shown, then restore the existing light header colour. This only
   // paints the OS-owned area; it does not reposition any app element.
   const themeColorMeta=document.querySelector('meta[name="theme-color"]');
-  let staffThemeDark=false;
-  let pendingStaffTheme={userId:'',mode:'LIGHT'};
+  const staffThemeRoles=['developer','super_admin','admin','booking_manager','treasurer'];
+  let staffThemeEnabled=false,staffThemeDark=false;
+  let pendingStaffTheme={userId:'',role:'',mode:'LIGHT'};
   function setIOSSystemBackdrop(splashActive){
-    if(!isIOS||!standalone())return;
-    const color=splashActive?'#075b43':(staffThemeDark?'#071e17':'#075b43');
+    const color=splashActive?'#075b43':(staffThemeEnabled?(staffThemeDark?'#071e17':'#075b43'):'#f3f6f8');
     if(themeColorMeta)themeColorMeta.content=color;
-    // iOS black-translucent status bar reveals the wrapper document background.
-    document.documentElement.style.backgroundColor=color;
-    document.body.style.backgroundColor=color;
+    // Only an authenticated staff theme changes the OS/document backdrop.
+    // Player Portal keeps its existing light status-bar colour until rollout.
+    if(isIOS&&standalone()){
+      document.documentElement.style.backgroundColor=color;
+      document.body.style.backgroundColor=color;
+    }
   }
   setIOSSystemBackdrop(true);
   // The booking iframe and splash share one CSS viewport. iOS may report a
@@ -661,11 +664,11 @@
     if(!gasWindow){gasWindow=event.source;gasOrigin=event.origin;}
     const d=event.data;
     if(d.type==='PPD_THEME_STATE'){
-      const roles=['developer','super_admin','admin','booking_manager','treasurer'];
       const userId=String(d.userId||''),role=String(d.role||'').toLowerCase();
-      if(!userId||!roles.includes(role))return;
-      pendingStaffTheme={userId,mode:d.mode==='DARK'?'DARK':'LIGHT'};
+      if(!userId||!staffThemeRoles.includes(role))return;
+      pendingStaffTheme={userId,role,mode:d.mode==='DARK'?'DARK':'LIGHT'};
       if(authReady&&currentUserId===userId){
+        staffThemeEnabled=true;
         staffThemeDark=pendingStaffTheme.mode==='DARK';
         setIOSSystemBackdrop(false);
       }
@@ -768,9 +771,10 @@
       authReady=!!d.authenticated;
       currentUserId=authReady?String(d.userId||''):'';
       if(authReady){
-        staffThemeDark=pendingStaffTheme.userId===currentUserId&&pendingStaffTheme.mode==='DARK';
+        staffThemeEnabled=pendingStaffTheme.userId===currentUserId&&staffThemeRoles.includes(pendingStaffTheme.role);
+        staffThemeDark=staffThemeEnabled&&pendingStaffTheme.mode==='DARK';
       }else{
-        staffThemeDark=false;pendingStaffTheme={userId:'',mode:'LIGHT'};
+        staffThemeEnabled=false;staffThemeDark=false;pendingStaffTheme={userId:'',role:'',mode:'LIGHT'};
       }
       setIOSSystemBackdrop(false);
       if(authReady){restoreDisplayPreferenceForUser(currentUserId,d.displayPreferences);restoreDeveloperBellPreference();}else{floatingBellDeveloperId='';floatingBellVisible=true;applyDisplayPreference(DEFAULT_DISPLAY_PREFERENCE);}
@@ -795,7 +799,7 @@
     }else if(d.type==='PPD_BIO_SESSION_GONE'){
       // Expired GAS session requires password. Wait for GAS to finish loading the
       // public page before removing our startup shield; keep the opt-in preference.
-      authReady=false;currentUserId='';staffThemeDark=false;pendingStaffTheme={userId:'',mode:'LIGHT'};setIOSSystemBackdrop(false);bioUnlockedForUser='';bioUnlockGranted=true;inlinePushVisible=false;inlinePushSlot=null;inlinePushNative.hidden=true;
+      authReady=false;currentUserId='';staffThemeEnabled=false;staffThemeDark=false;pendingStaffTheme={userId:'',role:'',mode:'LIGHT'};setIOSSystemBackdrop(false);bioUnlockedForUser='';bioUnlockGranted=true;inlinePushVisible=false;inlinePushSlot=null;inlinePushNative.hidden=true;
       registrationCheckPendingUser='';registrationPromptShownForUser='';deviceRegistered=false;pushReady=false;
       clearSavedSession();
       displayStartup('Your saved session expired. Opening sign-in\u2026');bioPresent();
