@@ -578,30 +578,6 @@
     if(installGuideDialog&&!installGuideDialog.open)installGuideDialog.showModal();
     postToGAS('PPD_INSTALL_RESULT',{installed:false,manual:true,platform:ios?'IOS':(/android/i.test(navigator.userAgent)?'ANDROID':'OTHER')});
   }
-  async function requestInstallFromSettings(platform){
-    if(standalone()){
-      install.hidden=true;
-      postToGAS('PPD_INSTALL_RESULT',{installed:true,platform:platform||'OTHER'});
-      sendPwaInfo();
-      return;
-    }
-    if(deferredInstall&&!isIOS){
-      const promptEvent=deferredInstall;
-      deferredInstall=null;
-      try{
-        await promptEvent.prompt();
-        const choice=await promptEvent.userChoice;
-        if(choice&&choice.outcome==='accepted')install.hidden=true;
-        postToGAS('PPD_INSTALL_RESULT',{installed:standalone(),accepted:!!(choice&&choice.outcome==='accepted'),outcome:choice&&choice.outcome||'unknown',platform:platform||'OTHER'});
-        sendPwaInfo();
-        return;
-      }catch(error){
-        openInstallGuide(platform||'OTHER');
-        return;
-      }
-    }
-    openInstallGuide(platform|| (isIOS?'IOS':'OTHER'));
-  }
   function requestAuthResync(){
     // The script.google.com outer iframe can contain a nested googleusercontent frame.
     // Both receive a query; only the trusted GAS UI is allowed to answer.
@@ -736,13 +712,6 @@
       }
       return;
     }
-    if(d.type==='PPD_INSTALL_REQUEST'){
-      if(d.userId&&currentUserId&&String(d.userId)!==currentUserId)return;
-      requestInstallFromSettings(String(d.platform|| (isIOS?'IOS':'OTHER'))).catch(error=>{
-        postToGAS('PPD_INSTALL_RESULT',{installed:standalone(),ok:false,error:String(error&&error.message||error).slice(0,160)});
-      });
-      return;
-    }
     if(d.type==='PPD_PUSH_INLINE_VIEW'){
       inlinePushVisible=!!(d.visible&&authReady&&currentUserId&&String(d.userId||'')===currentUserId);
       if(!inlinePushVisible){inlinePushSlot=null;inlinePushNative.hidden=true;}
@@ -795,6 +764,9 @@
     }else if(d.type==='PPD_INSTALL_REQUEST'){
       if(!authReady||!currentUserId||String(d.userId||'')!==currentUserId)return;
       if(standalone()){sendPwaInfo();return;}
+      // Keep the top-level native install flow; show the 225 manual guide
+      // only when no browser install prompt is available.
+      if(!deferredInstall){openInstallGuide(isIOS?'IOS':'OTHER');return;}
       // Install prompts must run from a TOP-LEVEL user click, not a cross-origin iframe.
       // Show the wrapper's own native install button in a dialog for that click.
       install.hidden=!deferredInstall;
