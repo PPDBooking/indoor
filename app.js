@@ -4,9 +4,9 @@
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.227';
-  const PWA_BUILD_NUMBER='227';
-  const PWA_RELEASE_DATE='2026-10-31';
+  const PWA_VERSION='1.0.1.228';
+  const PWA_BUILD_NUMBER='228';
+  const PWA_RELEASE_DATE='2026-11-02';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
   // A developer-only display preference. Notification registration is unaffected.
@@ -36,15 +36,15 @@
   // page is shown, then restore the existing light header colour. This only
   // paints the OS-owned area; it does not reposition any app element.
   const themeColorMeta=document.querySelector('meta[name="theme-color"]');
-  const staffThemeRoles=['developer','super_admin','admin','booking_manager','treasurer'];
+  const staffThemeRoles=['developer','super_admin','admin','booking_manager','treasurer','user'];
   let staffThemeEnabled=false,staffThemeDark=false;
   let pendingStaffTheme={userId:'',role:'',mode:'LIGHT'};
   function setIOSSystemBackdrop(splashActive){
-    const color=splashActive?'#075b43':(staffThemeEnabled?(staffThemeDark?'#071e17':'#075b43'):'#f3f6f8');
+    const color=splashActive?'#075b43':(staffThemeEnabled&&staffThemeDark?'#12161a':'#f3f6f8');
     if(themeColorMeta)themeColorMeta.content=color;
     document.documentElement.style.setProperty('--ppd-system-backdrop',color);
-    // Only an authenticated staff theme changes the OS/document backdrop.
-    // Player Portal keeps its existing light status-bar colour until rollout.
+    // Authenticated Staff and Player themes update the OS/document backdrop.
+    // Light matches the light header, Dark matches the neutral dark-grey header.
     if(isIOS&&standalone()){
       document.documentElement.style.backgroundColor=color;
       document.body.style.backgroundColor=color;
