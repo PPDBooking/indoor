@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.1.230: iOS full-height shell (html static + 100lvh). */
+/* GitHub Pages PWA wrapper v1.0.1.231: iOS full-height shell (html static + 100lvh). */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.230';
-  const PWA_BUILD_NUMBER='230';
+  const PWA_VERSION='1.0.1.231';
+  const PWA_BUILD_NUMBER='231';
   const PWA_RELEASE_DATE='2026-11-02';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -46,6 +46,7 @@
   let staffThemeEnabled=false,staffThemeDark=false;
   let pendingStaffTheme={userId:'',role:'',mode:'LIGHT'};
   const THEME_PREF_KEY='ppd_pwa_theme_choice_v1:';
+  let pendingThemePrefSave=null;
   const validThemePref=x=>['AUTO','LIGHT','DARK'].includes(String(x||'').toUpperCase());
   function setIOSSystemBackdrop(splashActive){
     const color=splashActive?'#075b43':(staffThemeEnabled&&staffThemeDark?'#12161a':'#f3f6f8');
@@ -706,7 +707,10 @@
     const d=event.data;
     if(d.type==='PPD_THEME_PREF_SAVE'){
       const uid=String(d.userId||''),mode=String(d.mode||'').toUpperCase();
-      if(!authReady||!uid||uid!==currentUserId||!validThemePref(mode))return;
+      if(!uid||!validThemePref(mode))return;
+      if(!authReady){pendingThemePrefSave={userId:uid,mode};return;}
+      if(uid!==currentUserId)return;
+      pendingThemePrefSave=null;
       try{localStorage.setItem(THEME_PREF_KEY+uid,mode);}catch(_){}
       return;
     }
@@ -834,7 +838,16 @@
         staffThemeEnabled=false;staffThemeDark=false;pendingStaffTheme={userId:'',role:'',mode:'LIGHT'};
       }
       setIOSSystemBackdrop(false);
-      if(authReady){restoreDisplayPreferenceForUser(currentUserId,d.displayPreferences);restoreDeveloperBellPreference();}else{floatingBellDeveloperId='';floatingBellVisible=true;applyDisplayPreference(DEFAULT_DISPLAY_PREFERENCE);}
+      if(authReady){
+        if(pendingThemePrefSave&&pendingThemePrefSave.userId===currentUserId){
+          try{localStorage.setItem(THEME_PREF_KEY+currentUserId,pendingThemePrefSave.mode);}catch(_){}
+        }
+        pendingThemePrefSave=null;
+        // Reconcile after authentication, as initial theme reads may arrive too early.
+        let storedTheme=null;try{storedTheme=localStorage.getItem(THEME_PREF_KEY+currentUserId);}catch(_){}
+        postToGAS('PPD_THEME_PREF_STATE',{userId:currentUserId,mode:validThemePref(storedTheme)?storedTheme:'AUTO',found:validThemePref(storedTheme)});
+        restoreDisplayPreferenceForUser(currentUserId,d.displayPreferences);restoreDeveloperBellPreference();
+      }else{pendingThemePrefSave=null;floatingBellDeveloperId='';floatingBellVisible=true;applyDisplayPreference(DEFAULT_DISPLAY_PREFERENCE);}
       if(authReady && (!wasAuthenticated || previousUser!==currentUserId)){
         bioUnlockGranted=!!(bioUnlockedForUser&&bioUnlockedForUser===currentUserId);
         deviceRegistered=false;pushReady=false;registrationPromptShownForUser='';registrationCheckPendingUser='';
