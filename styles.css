@@ -148,3 +148,21 @@ dialog{width:min(440px,calc(100vw - 24px));max-height:calc(100dvh - 38px);overfl
 #ppd-inline-push-native{position:fixed;z-index:17;min-height:44px;max-height:60px;min-width:0;border:1px solid #27825d;border-radius:11px;background:#087f5b;color:#fff;font:700 13px/1.35 system-ui,-apple-system,sans-serif;padding:8px 12px;text-align:center;white-space:normal;box-shadow:0 2px 8px #134c3220;touch-action:manipulation;}
 #ppd-inline-push-native:disabled{background:#e4ece8;border-color:#cbd8d1;color:#51675c;opacity:1;}
 #ppd-inline-push-native[hidden]{display:none!important;}
+
+/* v1.0.1.230: PWA-owned notification/install dialogs follow the authenticated theme.
+   These surfaces are outside the Apps Script iframe. */
+html.ppd-wrapper-dark dialog{background:#19242f;color:#eef3f9;border-color:#697b8c;box-shadow:0 22px 66px rgba(0,0,0,.65)}
+html.ppd-wrapper-dark dialog::backdrop{background:rgba(0,0,0,.72)}
+html.ppd-wrapper-dark .dialog-header{border-bottom-color:#435265}
+html.ppd-wrapper-dark .dialog-header p,
+html.ppd-wrapper-dark .support-text,
+html.ppd-wrapper-dark .fine-print{color:#c8d3df}
+html.ppd-wrapper-dark .dialog-icon{background:#344254;color:#f1c96c}
+html.ppd-wrapper-dark .close-button{color:#f0f4f8}
+html.ppd-wrapper-dark .notice-box{background:#253746;color:#eaf1f8;border-left-color:#81baa0}
+html.ppd-wrapper-dark .status-line strong{color:#a5e3c7}
+html.ppd-wrapper-dark .status-line strong.pending{color:#ffd28e}
+html.ppd-wrapper-dark .primary-button{background:#394d5c;border-color:#97aabc;color:#fff}
+html.ppd-wrapper-dark .secondary-button{background:#263645;border-color:#7c8ea0;color:#f0f5f9}
+html.ppd-wrapper-dark .ios-install-tip{background:#263545;color:#eef3f9;border-color:#637a91}
+html.ppd-wrapper-dark .setup-launcher{background:#293746;color:#e0ac40;border-color:#8292a7;box-shadow:0 4px 15px rgba(0,0,0,.35)}
