@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.1.229: iOS full-height shell (html static + 100lvh). */
+/* GitHub Pages PWA wrapper v1.0.1.230: iOS full-height shell (html static + 100lvh). */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.229';
-  const PWA_BUILD_NUMBER='229';
+  const PWA_VERSION='1.0.1.230';
+  const PWA_BUILD_NUMBER='230';
   const PWA_RELEASE_DATE='2026-11-02';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -45,8 +45,11 @@
   const staffThemeRoles=['developer','super_admin','admin','booking_manager','treasurer','user'];
   let staffThemeEnabled=false,staffThemeDark=false;
   let pendingStaffTheme={userId:'',role:'',mode:'LIGHT'};
+  const THEME_PREF_KEY='ppd_pwa_theme_choice_v1:';
+  const validThemePref=x=>['AUTO','LIGHT','DARK'].includes(String(x||'').toUpperCase());
   function setIOSSystemBackdrop(splashActive){
     const color=splashActive?'#075b43':(staffThemeEnabled&&staffThemeDark?'#12161a':'#f3f6f8');
+    document.documentElement.classList.toggle('ppd-wrapper-dark',!splashActive&&staffThemeEnabled&&staffThemeDark);
     if(themeColorMeta)themeColorMeta.content=color;
     document.documentElement.style.setProperty('--ppd-system-backdrop',color);
     // Authenticated Staff and Player themes update the OS/document backdrop.
@@ -701,6 +704,19 @@
     if(gasWindow && event.source!==gasWindow)return;
     if(!gasWindow){gasWindow=event.source;gasOrigin=event.origin;}
     const d=event.data;
+    if(d.type==='PPD_THEME_PREF_SAVE'){
+      const uid=String(d.userId||''),mode=String(d.mode||'').toUpperCase();
+      if(!authReady||!uid||uid!==currentUserId||!validThemePref(mode))return;
+      try{localStorage.setItem(THEME_PREF_KEY+uid,mode);}catch(_){}
+      return;
+    }
+    if(d.type==='PPD_THEME_PREF_READ'){
+      const uid=String(d.userId||'');
+      if(!authReady||!uid||uid!==currentUserId)return;
+      let saved=null;try{saved=localStorage.getItem(THEME_PREF_KEY+uid);}catch(_){}
+      postToGAS('PPD_THEME_PREF_STATE',{userId:uid,mode:validThemePref(saved)?saved:'AUTO',found:validThemePref(saved)});
+      return;
+    }
     if(d.type==='PPD_THEME_STATE'){
       const userId=String(d.userId||''),role=String(d.role||'').toLowerCase();
       if(!userId||!staffThemeRoles.includes(role))return;
