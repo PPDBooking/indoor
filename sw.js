@@ -1,10 +1,10 @@
-/* Point Pedro Court GitHub Pages shell v1.0.1.231.
+/* Point Pedro Court GitHub Pages shell v1.0.1.232.
    GAS iframe / Google Sheets / authentication responses are NEVER cached here. */
 'use strict';
-const CACHE_NAME='ppd-wrapper-shell-v1.0.1.231';
+const CACHE_NAME='ppd-wrapper-shell-v1.0.1.232';
 const PREFIX='ppd-wrapper-shell-';
 const SCOPE_URL=new URL('./',self.registration.scope);
-const CORE_FILES=['./','./index.html','./styles.css?v=1.0.1.231','./app.js?v=1.0.1.231','./assets/ppd-badminton-splash.webp','./assets/ppd-badminton-desktop.webp?v=1.0.1.213'];
+const CORE_FILES=['./','./index.html','./styles.css?v=1.0.1.232','./app.js?v=1.0.1.232','./assets/ppd-badminton-splash.webp','./assets/ppd-splash-logo.webp','./assets/ppd-badminton-desktop.webp?v=1.0.1.213'];
 const OPTIONAL_FILES=['./manifest.webmanifest','./push-config.json',
   './icons/icon-192.png','./icons/icon-512.png','./icons/apple-touch-icon.png'];
 const isScopeURL=url=>url.origin===SCOPE_URL.origin&&url.pathname.startsWith(SCOPE_URL.pathname);
@@ -34,23 +34,55 @@ self.addEventListener('fetch',event=>{
   if(event.request.method!=='GET')return;
   const url=new URL(event.request.url);
   if(!isShellURL(url))return;
-  event.respondWith((async()=>{
-    try{
-      const response=await fetch(event.request);
-      if(response.ok&&response.type==='basic'){
-        const copy=response.clone();
-        event.waitUntil(caches.open(CACHE_NAME).then(cache=>cache.put(event.request,copy)));
-      }
+  const cacheKey=new Request(url.origin+url.pathname,{method:'GET'});
+  const isNavigation=event.request.mode==='navigate';
+  const isPushConfig=url.pathname.endsWith('/push-config.json');
+  const cachePromise=caches.open(CACHE_NAME);
+  const cachedPromise=cachePromise.then(cache=>cache.match(cacheKey,{ignoreSearch:true}));
+
+  if(isNavigation){
+    // A cached wrapper document is painted immediately; the latest HTML is
+    // checked in the background. Query parameters (push/deep links) are retained
+    // by the live URL and do not create duplicate cached shell documents.
+    const refreshPromise=fetch(event.request).then(response=>{
+      if(response.ok&&response.type==='basic')return cachePromise.then(cache=>cache.put(cacheKey,response.clone())).then(()=>response);
       return response;
-    }catch(e){
-      const cache=await caches.open(CACHE_NAME);
-      const fallback=await cache.match(event.request,{ignoreSearch:true});
-      if(fallback)return fallback;
-      if(event.request.mode==='navigate'){
-        const page=await cache.match('./index.html');if(page)return page;
-      }
-      return Response.error();
+    });
+    event.waitUntil(refreshPromise.catch(()=>{}));
+    event.respondWith((async()=>{
+      const cached=await cachedPromise;
+      if(cached)return cached;
+      try{const fresh=await refreshPromise;if(fresh)return fresh;}catch(e){}
+      const cache=await cachePromise;
+      const fallback=await cache.match(new URL('./index.html',SCOPE_URL).href,{ignoreSearch:true});
+      return fallback||Response.error();
+    })());
+    return;
+  }
+
+  if(isPushConfig){
+    // The VAPID public key is tiny but must remain refreshable after configuration changes.
+    const networkPromise=fetch(event.request).then(response=>{
+      if(response.ok&&response.type==='basic')return cachePromise.then(cache=>cache.put(cacheKey,response.clone())).then(()=>response);
+      return response;
+    });
+    event.respondWith((async()=>{
+      try{return await networkPromise;}
+      catch(e){return (await cachedPromise)||Response.error();}
+    })());
+    return;
+  }
+
+  // Versioned JS/CSS and approved local images are immutable for this worker build.
+  // Cache-first avoids a second round of network requests competing with the GAS iframe.
+  event.respondWith((async()=>{
+    const cached=await cachedPromise;
+    if(cached)return cached;
+    const response=await fetch(event.request);
+    if(response.ok&&response.type==='basic'){
+      try{await cachePromise.then(cache=>cache.put(cacheKey,response.clone()));}catch(e){}
     }
+    return response;
   })());
 });
 self.addEventListener('push',event=>{

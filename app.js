@@ -1,12 +1,12 @@
-/* GitHub Pages PWA wrapper v1.0.1.231: iOS full-height shell (html static + 100lvh). */
+/* GitHub Pages PWA wrapper v1.0.1.232: cached shell startup and staged loading. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.231';
-  const PWA_BUILD_NUMBER='231';
-  const PWA_RELEASE_DATE='2026-11-02';
+  const PWA_VERSION='1.0.1.232';
+  const PWA_BUILD_NUMBER='232';
+  const PWA_RELEASE_DATE='2026-11-04';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
   // A developer-only display preference. Notification registration is unaffected.
@@ -968,10 +968,12 @@
       setTimeout(consumeNotificationLaunch,500);
   });
   navigator.serviceWorker?.addEventListener('message',e=>{if(e.data?.type==='PPD_PUSH_RECEIVED'&&authReady)postToGAS('PPD_PUSH_STATUS');});
-  fetch('./push-config.json',{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(async config=>{
+  // Register the shell worker independently of the optional push configuration.
+  // This lets the static app shell become cache-ready without waiting for push-config.json.
+  ensureSW().catch(e=>console.warn('Service worker failed:',e));
+  fetch('./push-config.json',{cache:'no-store'}).then(r=>r.ok?r.json():{}).then(config=>{
     vapidKey=String(config.vapidPublicKey||'').trim();if(!/^[A-Za-z0-9_-]{80,100}$/.test(vapidKey))vapidKey='';
     pushConfigLoaded=true;
-    try{await ensureSW();}catch(e){console.warn('Service worker failed:',e);}
     refreshUI();sendPwaInfo();
     if(authReady&&'Notification' in window&&Notification.permission==='granted')checkCurrentDeviceRegistrationAfterLogin(currentUserId);
   }).catch(e=>{
