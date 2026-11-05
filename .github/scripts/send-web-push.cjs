@@ -27,7 +27,7 @@ const allowedHost=host=>['fcm.googleapis.com','updates.push.services.mozilla.com
   const suffix=String(job.eventType||'BOOKING').slice(0,40)+'-'+String(job.relatedId||job.jobId).slice(0,60);
   const page=['home','book','bookings','users'].includes(String(job.targetPage))?job.targetPage:'home';
   const payload=JSON.stringify({title:String(job.title||'Point Pedro Indoor Court').slice(0,90),body:String(job.body||'New booking update').slice(0,210),url:'./?ppdpage='+encodeURIComponent(page),tag:suffix});
-  for(const d of job.devices.slice(0,12)){
+  for(const d of job.devices){
     try{
       const url=new URL(d.subscription.endpoint);
       if(url.protocol!=='https:'||!allowedHost(url.hostname.toLowerCase()))throw new Error('Forbidden Push endpoint');
