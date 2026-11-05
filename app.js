@@ -1,11 +1,11 @@
-/* GitHub Pages PWA wrapper v1.0.1.233: cached shell startup and staged loading. */
+/* GitHub Pages PWA wrapper v1.0.1.234: cached shell startup and staged loading. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.233';
-  const PWA_BUILD_NUMBER='233';
+  const PWA_VERSION='1.0.1.234';
+  const PWA_BUILD_NUMBER='234';
   const PWA_RELEASE_DATE='2026-11-05';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
@@ -198,6 +198,11 @@
   if(splashBackgroundQuery.addEventListener)splashBackgroundQuery.addEventListener('change',preloadSplashBackground);
   else {let previousDesktop=splashBackgroundQuery.matches;window.addEventListener('resize',()=>{const nextDesktop=splashBackgroundQuery.matches;if(nextDesktop!==previousDesktop){previousDesktop=nextDesktop;preloadSplashBackground();}});}
   const PWA_SPLASH_META_KEY='ppd_public_splash_meta_v1';
+  function appsScriptTitleVersion(version){
+    const clean=String(version||'').trim().replace(/^v/i,'');
+    if(!clean)return '';
+    return clean.split('.').slice(0,3).join('.');
+  }
   function applySplashMetadata(data, persist=true){
     if(!data||typeof data!=='object')return;
     const name=typeof data.developerName==='string'?data.developerName.trim().slice(0,100):'';
@@ -205,6 +210,8 @@
     const displayName=typeof data.developerName==='string'?(name||'AA Computers'):'';
     if(displayName)$('pwa-splash-developer').textContent=displayName;
     if(version)$('pwa-splash-version').textContent=version;
+    const titleVersion=appsScriptTitleVersion(version);
+    document.title='Court Reservation System'+(titleVersion?' - '+titleVersion:'');
     if(persist&&(typeof data.developerName==='string'||version)){try{
       const previous=JSON.parse(localStorage.getItem(PWA_SPLASH_META_KEY)||'{}');
       localStorage.setItem(PWA_SPLASH_META_KEY,JSON.stringify({developerName:displayName||String(previous.developerName||'AA Computers').slice(0,100),appVersion:version||String(previous.appVersion||'').slice(0,40)}));
@@ -241,6 +248,8 @@
     ['login','username','target','request','booking','action'].forEach(key => {
       if (launch.has(key)) target.searchParams.set(key, launch.get(key));
     });
+    // Let Apps Script suppress its nested document title in the installed PWA window.
+    target.searchParams.set('pwa','1');
     return target.href;
   })();
   iframe.src = GAS_URL;

@@ -1,8 +1,8 @@
 {
   "id": "./",
-  "name": "Point Pedro Indoor Court Booking",
+  "name": "Point Pedro Divisional Indoor",
   "short_name": "PPD Court",
-  "description": "Point Pedro Indoor Court booking portal (Google Apps Script iframe wrapper)",
+  "description": "Point Pedro Divisional Indoor Court Reservation System",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
