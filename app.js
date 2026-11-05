@@ -1,12 +1,12 @@
-/* GitHub Pages PWA wrapper v1.0.1.232: cached shell startup and staged loading. */
+/* GitHub Pages PWA wrapper v1.0.1.233: cached shell startup and staged loading. */
 (() => {
   'use strict';
   const $ = id => document.getElementById(id);
   const dialog = $('notification-dialog');
   const iframe = $('booking-frame');
-  const PWA_VERSION='1.0.1.232';
-  const PWA_BUILD_NUMBER='232';
-  const PWA_RELEASE_DATE='2026-11-04';
+  const PWA_VERSION='1.0.1.233';
+  const PWA_BUILD_NUMBER='233';
+  const PWA_RELEASE_DATE='2026-11-05';
   const PWA_LAST_UPDATE_KEY='ppd_pwa_last_successful_update_v1';
   const setup = $('notification-settings-button');
   // A developer-only display preference. Notification registration is unaffected.
